@@ -58,14 +58,25 @@ export function RulesEditor({ settings, save, notify }: Props) {
 
   return (
     <section>
-      <ProfileBar settings={settings} save={save} notify={notify} selectedId={editingId} select={(id) => { setEditing(null); setProfileId(id); }} />
+      <ProfileBar
+        settings={settings}
+        save={save}
+        notify={notify}
+        selectedId={editingId}
+        select={(id) => {
+          setEditing(null);
+          setProfileId(id);
+        }}
+      />
       <div class="card">
         <div class="row between">
           <div>
             <h2>Rules{settings.profiles.length > 1 ? ` · ${profileName}` : ''}</h2>
             <div class="hint">Checked top to bottom; the first match wins. Drag to reorder.</div>
           </div>
-          <button class="btn primary" onClick={() => setEditing('new')}>Add rule</button>
+          <button class="btn primary" onClick={() => setEditing('new')}>
+            Add rule
+          </button>
         </div>
         {editing === 'new' && <RuleForm onSave={upsert} onCancel={() => setEditing(null)} />}
         {rules.length === 0 && <div class="muted">No rules yet. Add one, or start from a preset below.</div>}
@@ -78,14 +89,36 @@ export function RulesEditor({ settings, save, notify }: Props) {
                 <div
                   class={`rule ${!rule.enabled ? 'disabled' : ''} ${dragIdx === i ? 'dragging' : ''} ${overIdx === i ? 'over' : ''}`}
                   draggable
-                  onDragStart={(e) => { setDragIdx(i); e.dataTransfer?.setData('text/plain', String(i)); }}
-                  onDragOver={(e) => { e.preventDefault(); setOverIdx(i); }}
+                  onDragStart={(e) => {
+                    setDragIdx(i);
+                    e.dataTransfer?.setData('text/plain', String(i));
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setOverIdx(i);
+                  }}
                   onDragLeave={() => setOverIdx((o) => (o === i ? null : o))}
-                  onDrop={(e) => { e.preventDefault(); if (dragIdx !== null) move(dragIdx, i); setDragIdx(null); setOverIdx(null); }}
-                  onDragEnd={() => { setDragIdx(null); setOverIdx(null); }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    if (dragIdx !== null) move(dragIdx, i);
+                    setDragIdx(null);
+                    setOverIdx(null);
+                  }}
+                  onDragEnd={() => {
+                    setDragIdx(null);
+                    setOverIdx(null);
+                  }}
                 >
-                  <span class="handle" title="Drag to reorder" aria-hidden="true"><Icons.grip /></span>
-                  <input type="checkbox" checked={rule.enabled} title="Enabled" aria-label={`Enable rule ${rule.name}`} onChange={(e) => upsert({ ...rule, enabled: (e.target as HTMLInputElement).checked })} />
+                  <span class="handle" title="Drag to reorder" aria-hidden="true">
+                    <Icons.grip />
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={rule.enabled}
+                    title="Enabled"
+                    aria-label={`Enable rule ${rule.name}`}
+                    onChange={(e) => upsert({ ...rule, enabled: (e.target as HTMLInputElement).checked })}
+                  />
                   <div class="meta">
                     <span class="dot" style={{ background: COLOR_HEX[resolveColor(rule.color, rule.name)] }} />
                     <b>{rule.name}</b>
@@ -95,10 +128,30 @@ export function RulesEditor({ settings, save, notify }: Props) {
                     {rule.presetId ? <span class="muted small">preset</span> : null}
                   </div>
                   <div class="row" style="gap: 2px">
-                    <button class="btn icon" title="Move up" aria-label="Move up" disabled={i === 0} onClick={() => move(i, i - 1)}>↑</button>
-                    <button class="btn icon" title="Move down" aria-label="Move down" disabled={i === rules.length - 1} onClick={() => move(i, i + 1)}>↓</button>
-                    <button class="btn sm" onClick={() => setEditing(rule)}>Edit</button>
-                    <button class="btn sm danger" onClick={() => void setRules(rules.filter((r) => r.id !== rule.id))}>Delete</button>
+                    <button
+                      class="btn icon"
+                      title="Move up"
+                      aria-label="Move up"
+                      disabled={i === 0}
+                      onClick={() => move(i, i - 1)}
+                    >
+                      ↑
+                    </button>
+                    <button
+                      class="btn icon"
+                      title="Move down"
+                      aria-label="Move down"
+                      disabled={i === rules.length - 1}
+                      onClick={() => move(i, i + 1)}
+                    >
+                      ↓
+                    </button>
+                    <button class="btn sm" onClick={() => setEditing(rule)}>
+                      Edit
+                    </button>
+                    <button class="btn sm danger" onClick={() => void setRules(rules.filter((r) => r.id !== rule.id))}>
+                      Delete
+                    </button>
                   </div>
                 </div>
               )}
@@ -122,8 +175,24 @@ export function RulesEditor({ settings, save, notify }: Props) {
       <div class="card">
         <h2>Test a URL</h2>
         <div class="grid2">
-          <label class="field"><span>URL</span><input class="input" placeholder="https://docs.github.com/en" value={testUrl} onInput={(e) => setTestUrl((e.target as HTMLInputElement).value)} /></label>
-          <label class="field"><span>Title (optional)</span><input class="input" placeholder="Page title" value={testTitle} onInput={(e) => setTestTitle((e.target as HTMLInputElement).value)} /></label>
+          <label class="field">
+            <span>URL</span>
+            <input
+              class="input"
+              placeholder="https://docs.github.com/en"
+              value={testUrl}
+              onInput={(e) => setTestUrl((e.target as HTMLInputElement).value)}
+            />
+          </label>
+          <label class="field">
+            <span>Title (optional)</span>
+            <input
+              class="input"
+              placeholder="Page title"
+              value={testTitle}
+              onInput={(e) => setTestTitle((e.target as HTMLInputElement).value)}
+            />
+          </label>
         </div>
         {testUrl.trim() && (
           <div class="row">
@@ -133,7 +202,13 @@ export function RulesEditor({ settings, save, notify }: Props) {
                 <span>
                   Group <b>{testResult.name}</b>{' '}
                   <span class="muted small">
-                    ({testResult.source === 'rule' ? `rule: ${rules.find((r) => r.id === testResult.ruleId)?.pattern ?? ''}` : testResult.source === 'domain' ? 'domain fallback' : 'content classification'})
+                    (
+                    {testResult.source === 'rule'
+                      ? `rule: ${rules.find((r) => r.id === testResult.ruleId)?.pattern ?? ''}`
+                      : testResult.source === 'domain'
+                        ? 'domain fallback'
+                        : 'content classification'}
+                    )
                   </span>
                 </span>
               </>

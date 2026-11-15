@@ -1,8 +1,25 @@
 import { describe, expect, it } from 'vitest';
 import {
-  DOMAINS_PER_DAY, GROUPS_PER_DAY, INSIGHTS_RETENTION_DAYS, SAMPLE_INTERVAL_MS, UNTITLED_GROUP,
-  addSample, bandPath, bumpDay, dayKey, emptyInsights, lastDayKeys, linePath, niceMax, normalizeInsights,
-  pruneDays, shouldSample, summarize, takeSample, topEntries, xAt,
+  DOMAINS_PER_DAY,
+  GROUPS_PER_DAY,
+  INSIGHTS_RETENTION_DAYS,
+  SAMPLE_INTERVAL_MS,
+  UNTITLED_GROUP,
+  addSample,
+  bandPath,
+  bumpDay,
+  dayKey,
+  emptyInsights,
+  lastDayKeys,
+  linePath,
+  niceMax,
+  normalizeInsights,
+  pruneDays,
+  shouldSample,
+  summarize,
+  takeSample,
+  topEntries,
+  xAt,
 } from '@/core/insights';
 import { group, tab } from './helpers';
 
@@ -77,7 +94,11 @@ describe('takeSample', () => {
 
 describe('topEntries / pruneDays', () => {
   it('sorts by value then key', () => {
-    expect(topEntries({ b: 2, a: 2, c: 5, d: 1 }, 3)).toEqual([['c', 5], ['a', 2], ['b', 2]]);
+    expect(topEntries({ b: 2, a: 2, c: 5, d: 1 }, 3)).toEqual([
+      ['c', 5],
+      ['a', 2],
+      ['b', 2],
+    ]);
   });
   it('keeps exactly keepDays days', () => {
     const days = { '2026-11-15': 1, '2026-11-14': 2, '2026-11-13': 3, '2026-10-01': 4 };
@@ -91,7 +112,14 @@ describe('addSample', () => {
     d = addSample(d, { total: 10, domains: { 'a.com': 4, 'b.com': 1 }, groups: { G: 3 } }, NOON);
     d = addSample(d, { total: 4, domains: { 'a.com': 2 }, groups: { G: 2, H: 1 } }, NOON + 1000);
     expect(d.lastSampleAt).toBe(NOON + 1000);
-    expect(d.days['2026-11-15']).toEqual({ n: 2, sum: 14, min: 4, max: 10, domains: { 'a.com': 6, 'b.com': 1 }, groups: { G: 3, H: 1 } });
+    expect(d.days['2026-11-15']).toEqual({
+      n: 2,
+      sum: 14,
+      min: 4,
+      max: 10,
+      domains: { 'a.com': 6, 'b.com': 1 },
+      groups: { G: 3, H: 1 },
+    });
   });
   it('starts a new day and prunes beyond retention', () => {
     let d = addSample(emptyInsights(), { total: 1, domains: {}, groups: {} }, NOON - INSIGHTS_RETENTION_DAYS * DAY);
@@ -138,15 +166,27 @@ describe('summarize', () => {
         '2026-11-14': { n: 0, sum: 0, min: 0, max: 0 },
       },
     });
-    const s = summarize(data, { closedByDay: { '2026-11-14': 3, '2026-11-15': 1 }, discardedByDay: { '2026-11-15': 4 } }, 3, NOON);
+    const s = summarize(
+      data,
+      { closedByDay: { '2026-11-14': 3, '2026-11-15': 1 }, discardedByDay: { '2026-11-15': 4 } },
+      3,
+      NOON,
+    );
     expect(s.days).toEqual([
       { key: '2026-11-13', min: 8, avg: 10, max: 12, closed: 0, discarded: 0 },
       { key: '2026-11-14', min: null, avg: null, max: null, closed: 3, discarded: 0 },
       { key: '2026-11-15', min: 6, avg: 6, max: 6, closed: 1, discarded: 4 },
     ]);
     // a.com: (8/2 + 2/1) / 2 days = 3; c.com: 3; b.com: 1
-    expect(s.topDomains).toEqual([{ domain: 'a.com', avg: 3 }, { domain: 'c.com', avg: 3 }, { domain: 'b.com', avg: 1 }]);
-    expect(s.biggestGroups).toEqual([{ title: 'G', size: 6 }, { title: 'H', size: 2 }]);
+    expect(s.topDomains).toEqual([
+      { domain: 'a.com', avg: 3 },
+      { domain: 'c.com', avg: 3 },
+      { domain: 'b.com', avg: 1 },
+    ]);
+    expect(s.biggestGroups).toEqual([
+      { title: 'G', size: 6 },
+      { title: 'H', size: 2 },
+    ]);
     expect(s.totals).toEqual({ closed: 4, discarded: 4, samples: 3 });
   });
   it('limits list lengths', () => {

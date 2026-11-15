@@ -33,9 +33,9 @@ jobs:
       - name: Typecheck
         run: bun run typecheck
 
-      # Formatting is not enforced yet (see #13); lint errors fail the build.
-      - name: Lint (Biome)
-        run: bunx biome ci --formatter-enabled=false .
+      # Lint errors and unformatted files fail the build (fix locally with `bun run format`).
+      - name: Lint and format check (Biome)
+        run: bunx biome ci .
 
       - name: Unit tests with coverage
         run: bun run coverage

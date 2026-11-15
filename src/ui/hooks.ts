@@ -54,9 +54,17 @@ export function useBrowserState(): [BrowserState | null, () => void] {
   useEffect(() => {
     refresh();
     const events = [
-      chrome.tabs.onCreated, chrome.tabs.onRemoved, chrome.tabs.onUpdated, chrome.tabs.onMoved,
-      chrome.tabs.onActivated, chrome.tabs.onAttached, chrome.tabs.onDetached,
-      chrome.tabGroups.onCreated, chrome.tabGroups.onRemoved, chrome.tabGroups.onUpdated, chrome.tabGroups.onMoved,
+      chrome.tabs.onCreated,
+      chrome.tabs.onRemoved,
+      chrome.tabs.onUpdated,
+      chrome.tabs.onMoved,
+      chrome.tabs.onActivated,
+      chrome.tabs.onAttached,
+      chrome.tabs.onDetached,
+      chrome.tabGroups.onCreated,
+      chrome.tabGroups.onRemoved,
+      chrome.tabGroups.onUpdated,
+      chrome.tabGroups.onMoved,
     ] as Array<{ addListener(cb: () => void): void; removeListener(cb: () => void): void }>;
     for (const e of events) e.addListener(refresh);
     return () => {
@@ -69,7 +77,9 @@ export function useBrowserState(): [BrowserState | null, () => void] {
 export function useStats(deps: unknown[] = []): Stats | null {
   const [stats, setStats] = useState<Stats | null>(null);
   useEffect(() => {
-    void send<Stats>({ type: 'getStats' }).then(setStats).catch(() => undefined);
+    void send<Stats>({ type: 'getStats' })
+      .then(setStats)
+      .catch(() => undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
   return stats;
@@ -81,7 +91,12 @@ export interface ToastAction {
 }
 
 /** Short-lived status message. With an action (e.g. Undo) it stays up longer and shows a button. */
-export function useToast(): [string | null, (msg: string, action?: ToastAction) => void, ToastAction | null, () => void] {
+export function useToast(): [
+  string | null,
+  (msg: string, action?: ToastAction) => void,
+  ToastAction | null,
+  () => void,
+] {
   const [toast, setToast] = useState<{ msg: string; action: ToastAction | null; id: number } | null>(null);
   const seq = useRef(0);
   const show = useCallback((msg: string, action?: ToastAction) => {

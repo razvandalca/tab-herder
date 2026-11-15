@@ -23,10 +23,24 @@ describe('paletteQuery', () => {
 describe('buildCommands', () => {
   it('includes global commands and per-group commands', () => {
     const all = cmds.map((c) => c.id);
-    expect(all).toEqual(expect.arrayContaining([
-      'groupNow', 'cleanupNow', 'closeDuplicates', 'saveSession', 'collapseAll', 'expandAll', 'ungroupAll', 'closeAllGroups',
-      'closeGroup:10', 'ungroup:10', 'move:10', 'collapse:10', 'expand:11', 'closeGroup:12',
-    ]));
+    expect(all).toEqual(
+      expect.arrayContaining([
+        'groupNow',
+        'cleanupNow',
+        'closeDuplicates',
+        'saveSession',
+        'collapseAll',
+        'expandAll',
+        'ungroupAll',
+        'closeAllGroups',
+        'closeGroup:10',
+        'ungroup:10',
+        'move:10',
+        'collapse:10',
+        'expand:11',
+        'closeGroup:12',
+      ]),
+    );
     expect(all).not.toContain('collapse:11');
   });
   it('omits window-wide group commands when the window has no groups', () => {
@@ -40,7 +54,12 @@ describe('buildCommands', () => {
     expect(req('groupNow')).toEqual({ type: 'groupNow' });
     expect(req('cleanupNow')).toEqual({ type: 'cleanupNow' });
     expect(req('closeDuplicates')).toEqual({ type: 'closeDuplicates' });
-    expect(req('saveSession', 'Research')).toEqual({ type: 'saveSession', kind: 'window', windowId: 1, name: 'Research' });
+    expect(req('saveSession', 'Research')).toEqual({
+      type: 'saveSession',
+      kind: 'window',
+      windowId: 1,
+      name: 'Research',
+    });
     expect(req('collapseAll')).toEqual({ type: 'collapseAll', windowId: 1, collapsed: true });
     expect(req('expandAll')).toEqual({ type: 'collapseAll', windowId: 1, collapsed: false });
     expect(req('ungroupAll')).toEqual({ type: 'ungroupAll', windowId: 1 });
@@ -58,7 +77,11 @@ describe('buildCommands', () => {
     const tab = cmds.find((c) => c.id === 'snoozeTab:tomorrow')!.request('') as { type: string; wakeAt: number };
     expect(tab.type).toBe('snoozeTab');
     expect(tab.wakeAt).toBeGreaterThan(before);
-    expect(cmds.find((c) => c.id === 'snoozeGroup:12:nextWeek')!.request('')).toEqual({ type: 'snoozeGroup', groupId: 12, wakeAt: expect.any(Number) });
+    expect(cmds.find((c) => c.id === 'snoozeGroup:12:nextWeek')!.request('')).toEqual({
+      type: 'snoozeGroup',
+      groupId: 12,
+      wakeAt: expect.any(Number),
+    });
     expect(searchCommands('snooze dev tonight', cmds)[0]!.command.id).toBe('snoozeGroup:10:tonight');
   });
   it('marks only close-all as needing confirmation, with a count', () => {
@@ -121,7 +144,10 @@ describe('searchCommands', () => {
 });
 
 describe('profile commands', () => {
-  const profiles = [{ id: 'work', name: 'Work' }, { id: 'home', name: 'Personal' }];
+  const profiles = [
+    { id: 'work', name: 'Work' },
+    { id: 'home', name: 'Personal' },
+  ];
   it('offers switching to every inactive profile', () => {
     const list = buildCommands([], 1, profiles, 'work');
     const ids = list.map((c) => c.id);

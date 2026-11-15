@@ -88,7 +88,8 @@ export function sortWindowGroups(
   const items = stripItems(tabs, windowId);
   const titles = new Map(groups.map((g) => [g.id, g.title.trim()]));
   const sizes = new Map<number, number>();
-  for (const t of tabs) if (t.windowId === windowId && t.groupId !== NO_GROUP) sizes.set(t.groupId, (sizes.get(t.groupId) ?? 0) + 1);
+  for (const t of tabs)
+    if (t.windowId === windowId && t.groupId !== NO_GROUP) sizes.set(t.groupId, (sizes.get(t.groupId) ?? 0) + 1);
   const groupIds = items.filter((i) => i.kind === 'group').map((i) => i.id);
   const cmp =
     key === 'name'

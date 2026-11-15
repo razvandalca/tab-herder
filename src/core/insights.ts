@@ -81,7 +81,8 @@ export function normalizeInsights(raw: unknown): InsightsData {
     for (const [k, d] of Object.entries(raw.days)) {
       if (!/^\d{4}-\d{2}-\d{2}$/.test(k) || !isRecord(d)) continue;
       const { n, sum, min, max } = d;
-      if (typeof n !== 'number' || typeof sum !== 'number' || typeof min !== 'number' || typeof max !== 'number') continue;
+      if (typeof n !== 'number' || typeof sum !== 'number' || typeof min !== 'number' || typeof max !== 'number')
+        continue;
       days[k] = { n, sum, min, max, domains: numberMap(d.domains), groups: numberMap(d.groups) };
     }
   }
@@ -262,7 +263,13 @@ export function linePath(values: Array<number | null>, width: number, height: nu
 }
 
 /** Closed SVG area between `lo` and `hi` for each contiguous run of non-null points. */
-export function bandPath(lo: Array<number | null>, hi: Array<number | null>, width: number, height: number, max: number): string {
+export function bandPath(
+  lo: Array<number | null>,
+  hi: Array<number | null>,
+  width: number,
+  height: number,
+  max: number,
+): string {
   const n = lo.length;
   const y = (v: number) => round(height - (v / max) * height);
   let d = '';

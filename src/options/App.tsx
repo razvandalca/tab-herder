@@ -50,19 +50,32 @@ export function App() {
       </header>
       <nav aria-label="Settings sections">
         {TABS.map(([id, label]) => (
-          <button key={id} class={tab === id ? 'active' : ''} onClick={() => setTab(id)} aria-current={tab === id ? 'page' : undefined}>
+          <button
+            key={id}
+            class={tab === id ? 'active' : ''}
+            onClick={() => setTab(id)}
+            aria-current={tab === id ? 'page' : undefined}
+          >
             {label}
           </button>
         ))}
       </nav>
       {tab === 'grouping' && <GroupingSettings settings={settings} save={save} notify={notify} fail={fail} />}
       {tab === 'rules' && <RulesEditor settings={settings} save={save} notify={notify} />}
-      {tab === 'cleanup' && <CleanupSettings settings={settings} save={save} local={local} notify={notify} fail={fail} />}
-      {tab === 'sessions' && <SessionsPanel settings={settings} save={save} local={local} notify={notify} fail={fail} />}
+      {tab === 'cleanup' && (
+        <CleanupSettings settings={settings} save={save} local={local} notify={notify} fail={fail} />
+      )}
+      {tab === 'sessions' && (
+        <SessionsPanel settings={settings} save={save} local={local} notify={notify} fail={fail} />
+      )}
       {tab === 'insights' && <InsightsPanel local={local} notify={notify} fail={fail} />}
       {tab === 'data' && <ImportExport settings={settings} local={local} notify={notify} fail={fail} />}
       {tab === 'shortcuts' && <ShortcutsPanel />}
-      {toast && <div class="toast" role="status">{toast}</div>}
+      {toast && (
+        <div class="toast" role="status">
+          {toast}
+        </div>
+      )}
     </div>
   );
 }

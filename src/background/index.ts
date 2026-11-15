@@ -90,7 +90,9 @@ chrome.alarms.onAlarm.addListener((alarm) => {
     void runAutosave().then((a) => log('autosave', a ? a.id : 'unchanged'));
   }
   if (alarm.name === SNOOZE_ALARM) {
-    void wakeDue().then((n) => log('snooze woke', n)).finally(() => void ensureSnoozeAlarm());
+    void wakeDue()
+      .then((n) => log('snooze woke', n))
+      .finally(() => void ensureSnoozeAlarm());
   }
 });
 chrome.commands.onCommand.addListener((command, tab) => void handleCommand(command, tab));

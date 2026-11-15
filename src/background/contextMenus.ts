@@ -1,6 +1,13 @@
 import { regroupAll } from './grouping';
 import { closeDuplicatesNow, runCleanup } from './cleanup';
-import { closeAllGroups, closeGroup, moveGroupToNewWindow, saveAndCloseGroup, setCollapsedAll, ungroupAll } from './groupActions';
+import {
+  closeAllGroups,
+  closeGroup,
+  moveGroupToNewWindow,
+  saveAndCloseGroup,
+  setCollapsedAll,
+  ungroupAll,
+} from './groupActions';
 import { NO_GROUP } from '@/shared/types';
 import { SNOOZE_PRESETS, presetWakeTime, type SnoozePreset } from '@/core/snooze';
 import { snoozeGroup, snoozeTab } from './snooze';
@@ -74,9 +81,13 @@ export function installContextMenus(): void {
 function installSnoozeMenus(): void {
   const contexts: ['page', 'action'] = ['page', 'action'];
   chrome.contextMenus.create({ id: 'sep-snooze', parentId: ROOT, type: 'separator', contexts });
-  for (const [id, title] of [['snooze-tab', 'Snooze this tab'], ['snooze-group', "Snooze this tab's group"]] as const) {
+  for (const [id, title] of [
+    ['snooze-tab', 'Snooze this tab'],
+    ['snooze-group', "Snooze this tab's group"],
+  ] as const) {
     chrome.contextMenus.create({ id, parentId: ROOT, title, contexts });
-    for (const p of SNOOZE_PRESETS) chrome.contextMenus.create({ id: `${id}:${p.id}`, parentId: id, title: p.label, contexts });
+    for (const p of SNOOZE_PRESETS)
+      chrome.contextMenus.create({ id: `${id}:${p.id}`, parentId: id, title: p.label, contexts });
   }
 }
 

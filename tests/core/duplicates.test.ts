@@ -14,8 +14,12 @@ describe('findDuplicates', () => {
     expect(findDuplicates(tabs)).toEqual([{ key: 'https://a.com/x', keep: 1, close: [2] }]);
   });
   it('keeps the active tab over an older one, and a pinned tab over a plain one', () => {
-    expect(duplicateTabIds([tab({ id: 1, url: 'https://a.com' }), tab({ id: 2, url: 'https://a.com', active: true })])).toEqual([1]);
-    expect(duplicateTabIds([tab({ id: 1, url: 'https://a.com' }), tab({ id: 2, url: 'https://a.com', pinned: true })])).toEqual([1]);
+    expect(
+      duplicateTabIds([tab({ id: 1, url: 'https://a.com' }), tab({ id: 2, url: 'https://a.com', active: true })]),
+    ).toEqual([1]);
+    expect(
+      duplicateTabIds([tab({ id: 1, url: 'https://a.com' }), tab({ id: 2, url: 'https://a.com', pinned: true })]),
+    ).toEqual([1]);
   });
   it('never closes pinned or audible tabs', () => {
     const tabs = [

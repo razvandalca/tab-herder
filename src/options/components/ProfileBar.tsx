@@ -1,7 +1,14 @@
 import { useState } from 'preact/hooks';
 import type { Settings } from '@/shared/types';
 import { newId } from '@/shared/defaults';
-import { createProfile, deleteProfile, duplicateProfile, profileRules, renameProfile, switchProfile } from '@/core/profiles';
+import {
+  createProfile,
+  deleteProfile,
+  duplicateProfile,
+  profileRules,
+  renameProfile,
+  switchProfile,
+} from '@/core/profiles';
 
 interface Props {
   settings: Settings;
@@ -45,7 +52,8 @@ export function ProfileBar({ settings, save, notify, selectedId, select }: Props
   };
 
   const remove = async () => {
-    if (!confirm(`Delete profile "${selected.name}" and its ${profileRules(settings, selected.id).length} rules?`)) return;
+    if (!confirm(`Delete profile "${selected.name}" and its ${profileRules(settings, selected.id).length} rules?`))
+      return;
     const next = deleteProfile(settings, selected.id);
     await save(next);
     select(next.activeProfileId);
@@ -62,7 +70,10 @@ export function ProfileBar({ settings, save, notify, selectedId, select }: Props
       <div class="row between" style="flex-wrap: wrap; gap: 8px">
         <div>
           <h2>Profiles</h2>
-          <div class="hint">Separate rule sets, e.g. Work and Personal. Only the active profile's rules are used; other settings are shared.</div>
+          <div class="hint">
+            Separate rule sets, e.g. Work and Personal. Only the active profile's rules are used; other settings are
+            shared.
+          </div>
         </div>
       </div>
       <div class="row" style="flex-wrap: wrap; gap: 6px">
@@ -71,22 +82,53 @@ export function ProfileBar({ settings, save, notify, selectedId, select }: Props
           style="width: auto; min-width: 160px"
           aria-label="Profile to edit"
           value={selected.id}
-          onChange={(e) => { setNaming(null); select((e.target as HTMLSelectElement).value); }}
+          onChange={(e) => {
+            setNaming(null);
+            select((e.target as HTMLSelectElement).value);
+          }}
         >
           {settings.profiles.map((p) => (
             <option key={p.id} value={p.id}>
-              {p.name}{p.id === settings.activeProfileId ? ' (active)' : ''}
+              {p.name}
+              {p.id === settings.activeProfileId ? ' (active)' : ''}
             </option>
           ))}
         </select>
-        {isActive ? <span class="badge">Active</span> : <button type="button" class="btn sm primary" onClick={() => void activate()}>Make active</button>}
-        <button type="button" class="btn sm" onClick={() => startNaming('new')}>New</button>
-        <button type="button" class="btn sm" onClick={() => startNaming('rename')}>Rename</button>
-        <button type="button" class="btn sm" onClick={() => void duplicate()}>Duplicate</button>
-        <button type="button" class="btn sm danger" disabled={settings.profiles.length <= 1} title={settings.profiles.length <= 1 ? 'The last profile cannot be deleted' : undefined} onClick={() => void remove()}>Delete</button>
+        {isActive ? (
+          <span class="badge">Active</span>
+        ) : (
+          <button type="button" class="btn sm primary" onClick={() => void activate()}>
+            Make active
+          </button>
+        )}
+        <button type="button" class="btn sm" onClick={() => startNaming('new')}>
+          New
+        </button>
+        <button type="button" class="btn sm" onClick={() => startNaming('rename')}>
+          Rename
+        </button>
+        <button type="button" class="btn sm" onClick={() => void duplicate()}>
+          Duplicate
+        </button>
+        <button
+          type="button"
+          class="btn sm danger"
+          disabled={settings.profiles.length <= 1}
+          title={settings.profiles.length <= 1 ? 'The last profile cannot be deleted' : undefined}
+          onClick={() => void remove()}
+        >
+          Delete
+        </button>
       </div>
       {naming && (
-        <form class="inline-form" style="padding: 0" onSubmit={(e) => { e.preventDefault(); void submit(); }}>
+        <form
+          class="inline-form"
+          style="padding: 0"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void submit();
+          }}
+        >
           <input
             class="input sm grow"
             aria-label={naming === 'new' ? 'New profile name' : 'Profile name'}
@@ -95,8 +137,12 @@ export function ProfileBar({ settings, save, notify, selectedId, select }: Props
             onInput={(e) => setName((e.target as HTMLInputElement).value)}
             autoFocus
           />
-          <button class="btn sm primary" type="submit">{naming === 'new' ? 'Create' : 'Rename'}</button>
-          <button type="button" class="btn sm" onClick={() => setNaming(null)}>Cancel</button>
+          <button class="btn sm primary" type="submit">
+            {naming === 'new' ? 'Create' : 'Rename'}
+          </button>
+          <button type="button" class="btn sm" onClick={() => setNaming(null)}>
+            Cancel
+          </button>
         </form>
       )}
     </section>

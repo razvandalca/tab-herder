@@ -4,10 +4,25 @@ import type { ExportFile, Settings } from '@/shared/types';
 import { mergeImportedSettings, switchProfile } from '@/core/profiles';
 import { regroupAll, regroupWindow } from './grouping';
 import { clearCleaned, closeDuplicatesNow, restoreCleaned, runCleanup } from './cleanup';
-import { deleteSession, renameSession, restoreSession, saveGroupSession, saveWindowSession, undoClose } from './sessions';
 import {
-  closeAllGroups, closeGroup, moveGroupToNewWindow, recolorGroup, renameGroup, saveAndCloseGroup, setCollapsed,
-  setCollapsedAll, ungroup, ungroupAll,
+  deleteSession,
+  renameSession,
+  restoreSession,
+  saveGroupSession,
+  saveWindowSession,
+  undoClose,
+} from './sessions';
+import {
+  closeAllGroups,
+  closeGroup,
+  moveGroupToNewWindow,
+  recolorGroup,
+  renameGroup,
+  saveAndCloseGroup,
+  setCollapsed,
+  setCollapsedAll,
+  ungroup,
+  ungroupAll,
 } from './groupActions';
 import { registerContentScript, unregisterContentScript } from './contentScripts';
 import { cancelSnoozed, snoozeGroup, snoozeTab, wakeSnoozed } from './snooze';
@@ -29,7 +44,9 @@ export async function handleRequest(req: Request): Promise<unknown> {
     case 'getStats':
       return getStats();
     case 'saveSession':
-      return req.kind === 'window' ? saveWindowSession(req.windowId, req.name) : saveGroupSession(req.groupId, req.name);
+      return req.kind === 'window'
+        ? saveWindowSession(req.windowId, req.name)
+        : saveGroupSession(req.groupId, req.name);
     case 'restoreSession':
       return restoreSession(req.id);
     case 'deleteSession':
@@ -97,10 +114,17 @@ export async function handleRequest(req: Request): Promise<unknown> {
 
 async function getStats(): Promise<Stats> {
   const [tabs, groups, local] = await Promise.all([chrome.tabs.query({}), chrome.tabGroups.query({}), getLocal()]);
-  return { openTabs: tabs.length, groups: groups.length, cleanedThisWeek: cleanedInLastDays(local.stats.cleanedByDay, 7) };
+  return {
+    openTabs: tabs.length,
+    groups: groups.length,
+    cleanedThisWeek: cleanedInLastDays(local.stats.cleanedByDay, 7),
+  };
 }
 
-export async function importData(data: ExportFile, rulesMode: 'replace' | 'append'): Promise<{ rules: number; sessions: number }> {
+export async function importData(
+  data: ExportFile,
+  rulesMode: 'replace' | 'append',
+): Promise<{ rules: number; sessions: number }> {
   if (!data || (data.version !== 1 && data.version !== 2)) throw new Error('Unsupported file format');
   let rulesCount = 0;
   if (data.settings) {
@@ -118,7 +142,10 @@ export async function importData(data: ExportFile, rulesMode: 'replace' | 'appen
     sessionsCount = sessions.length;
     await patchLocal((l) => {
       const ids = new Set(l.sessions.map((s) => s.id));
-      l.sessions = [...sessions.filter((s) => !ids.has(s.id)).map((s) => ({ ...s, ungrouped: s.ungrouped ?? [] })), ...l.sessions];
+      l.sessions = [
+        ...sessions.filter((s) => !ids.has(s.id)).map((s) => ({ ...s, ungrouped: s.ungrouped ?? [] })),
+        ...l.sessions,
+      ];
     });
   }
   return { rules: rulesCount, sessions: sessionsCount };
@@ -126,7 +153,8 @@ export async function importData(data: ExportFile, rulesMode: 'replace' | 'appen
 
 export function installMessageRouter(): void {
   chrome.runtime.onMessage.addListener((msg: Request, _sender, sendResponse: (r: Response) => void) => {
-    if (!msg || typeof msg !== 'object' || !('type' in msg) || (msg as { type: string }).type.startsWith('th:')) return false;
+    if (!msg || typeof msg !== 'object' || !('type' in msg) || (msg as { type: string }).type.startsWith('th:'))
+      return false;
     handleRequest(msg)
       .then((result) => sendResponse({ ok: true, result }))
       .catch((e: unknown) => sendResponse({ ok: false, error: e instanceof Error ? e.message : String(e) }));

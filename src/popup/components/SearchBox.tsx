@@ -16,7 +16,9 @@ export function SearchBox({ value, onChange, onKeyDown }: Props) {
   }, []);
   return (
     <div class="row" style="position: relative">
-      <span style="position: absolute; left: 9px; top: 7px; color: var(--fg-3)"><Icons.search /></span>
+      <span style="position: absolute; left: 9px; top: 7px; color: var(--fg-3)">
+        <Icons.search />
+      </span>
       <input
         ref={ref}
         class="input"

@@ -40,7 +40,10 @@ describe('planGrouping', () => {
     ]);
   });
   it('joins an existing group with the same title even for a single tab', () => {
-    const tabs = [tab({ id: 1, url: 'https://github.com/x' }), tab({ id: 2, url: 'https://github.com/y', groupId: 10 })];
+    const tabs = [
+      tab({ id: 1, url: 'https://github.com/x' }),
+      tab({ id: 2, url: 'https://github.com/y', groupId: 10 }),
+    ];
     const groups = [group({ id: 10, title: 'GitHub.com' })];
     expect(planGrouping(tabs, groups, settings(), state({ managedGroupIds: new Set([10]) }))).toEqual([
       { type: 'join', groupId: 10, tabIds: [1] },
@@ -69,14 +72,22 @@ describe('planGrouping', () => {
     expect(actions).toEqual([{ type: 'join', groupId: 11, tabIds: [1] }]);
   });
   it('ungroups a mis-grouped tab when there are too few tabs to create its group', () => {
-    const tabs = [tab({ id: 1, url: 'https://youtube.com/w', groupId: 10 }), tab({ id: 2, url: 'https://github.com/y', groupId: 10 })];
+    const tabs = [
+      tab({ id: 1, url: 'https://youtube.com/w', groupId: 10 }),
+      tab({ id: 2, url: 'https://github.com/y', groupId: 10 }),
+    ];
     const groups = [group({ id: 10, title: 'github.com' })];
     const actions = planGrouping(tabs, groups, settings(), state({ managedGroupIds: new Set([10]) }));
     expect(actions).toEqual([{ type: 'ungroup', tabIds: [1] }]);
   });
   it('does nothing when every tab is already in the right managed group', () => {
-    const tabs = [tab({ id: 1, url: 'https://a.com/1', groupId: 5 }), tab({ id: 2, url: 'https://a.com/2', groupId: 5 })];
-    expect(planGrouping(tabs, [group({ id: 5, title: 'a.com' })], settings(), state({ managedGroupIds: new Set([5]) }))).toEqual([]);
+    const tabs = [
+      tab({ id: 1, url: 'https://a.com/1', groupId: 5 }),
+      tab({ id: 2, url: 'https://a.com/2', groupId: 5 }),
+    ];
+    expect(
+      planGrouping(tabs, [group({ id: 5, title: 'a.com' })], settings(), state({ managedGroupIds: new Set([5]) })),
+    ).toEqual([]);
   });
   it('applies rules with their colour and keeps domain fallback for the rest', () => {
     const s = settings({ rules: [rule({ name: 'Dev', pattern: 'github.com', color: 'blue' })] });
@@ -93,6 +104,8 @@ describe('planGrouping', () => {
   });
   it('does nothing when grouping would only touch chrome pages in managed groups', () => {
     const tabs = [tab({ id: 1, url: 'chrome://newtab', groupId: 5 })];
-    expect(planGrouping(tabs, [group({ id: 5, title: 'a.com' })], settings(), state({ managedGroupIds: new Set([5]) }))).toEqual([]);
+    expect(
+      planGrouping(tabs, [group({ id: 5, title: 'a.com' })], settings(), state({ managedGroupIds: new Set([5]) })),
+    ).toEqual([]);
   });
 });

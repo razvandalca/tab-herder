@@ -148,8 +148,14 @@ describe('commonPrefix', () => {
   });
 
   it('compares strip items by kind and id', () => {
-    const a = [{ kind: 'group' as const, id: 1 }, { kind: 'tab' as const, id: 2 }];
-    const b = [{ kind: 'group' as const, id: 1 }, { kind: 'group' as const, id: 2 }];
+    const a = [
+      { kind: 'group' as const, id: 1 },
+      { kind: 'tab' as const, id: 2 },
+    ];
+    const b = [
+      { kind: 'group' as const, id: 1 },
+      { kind: 'group' as const, id: 2 },
+    ];
     expect(commonPrefix(a, b, sameItem)).toBe(1);
   });
 });

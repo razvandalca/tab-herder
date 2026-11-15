@@ -41,7 +41,9 @@ export async function currentWindowId(): Promise<number> {
 }
 
 export async function activeTab(windowId?: number): Promise<TabSnapshot | null> {
-  const [t] = await chrome.tabs.query(windowId === undefined ? { active: true, lastFocusedWindow: true } : { active: true, windowId });
+  const [t] = await chrome.tabs.query(
+    windowId === undefined ? { active: true, lastFocusedWindow: true } : { active: true, windowId },
+  );
   return t ? snapshotTab(t) : null;
 }
 

@@ -11,7 +11,13 @@ export function ColorPicker({ value, onChange, allowAuto }: Props) {
   return (
     <div class="swatches" role="radiogroup" aria-label="Group colour">
       {allowAuto && (
-        <button type="button" class={`swatch auto ${value === 'auto' ? 'selected' : ''}`} title="Auto (by name)" aria-label="Auto colour" onClick={() => onChange('auto')} />
+        <button
+          type="button"
+          class={`swatch auto ${value === 'auto' ? 'selected' : ''}`}
+          title="Auto (by name)"
+          aria-label="Auto colour"
+          onClick={() => onChange('auto')}
+        />
       )}
       {GROUP_COLORS.map((c) => (
         <button

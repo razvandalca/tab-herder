@@ -1,6 +1,14 @@
 // Samples aggregate open-tab counts for the options page Insights tab. Local only: nothing
 // here leaves chrome.storage.local, and no URLs are stored (only base domains and group titles).
-import { addSample, emptyInsights, normalizeInsights, shouldSample, takeSample, SAMPLE_INTERVAL_MS, type InsightsData } from '@/core/insights';
+import {
+  addSample,
+  emptyInsights,
+  normalizeInsights,
+  shouldSample,
+  takeSample,
+  SAMPLE_INTERVAL_MS,
+  type InsightsData,
+} from '@/core/insights';
 import { patchLocal } from '@/shared/storage';
 import { allGroups, allTabs } from './tabs';
 

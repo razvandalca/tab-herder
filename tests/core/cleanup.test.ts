@@ -58,7 +58,9 @@ describe('planCleanup', () => {
       tab({ id: 2, url: 'https://a.com/x?utm_source=1', lastAccessed: hoursAgo(1) }),
       tab({ id: 3, url: 'https://a.com/x', lastAccessed: hoursAgo(1), pinned: true }),
     ];
-    expect(planCleanup({ tabs, groups: [], settings: settings(), now: NOW }).close).toEqual([{ tabId: 2, reason: 'duplicate' }]);
+    expect(planCleanup({ tabs, groups: [], settings: settings(), now: NOW }).close).toEqual([
+      { tabId: 2, reason: 'duplicate' },
+    ]);
     const noDupes = settings({}, { closeDuplicates: false });
     expect(planCleanup({ tabs, groups: [], settings: noDupes, now: NOW }).close).toEqual([]);
   });
@@ -77,7 +79,9 @@ describe('planCleanup', () => {
     const mixed = [idle[0]!, tab({ id: 3, url: 'https://youtube.com/3', groupId: 9, lastAccessed: NOW - 60_000 })];
     expect(planCleanup({ tabs: mixed, groups, settings: s, now: NOW }).close).toEqual([]);
     // Group interaction counts as activity
-    expect(planCleanup({ tabs: idle, groups, settings: s, now: NOW, groupLastActive: { 9: NOW - 60_000 } }).close).toEqual([]);
+    expect(
+      planCleanup({ tabs: idle, groups, settings: s, now: NOW, groupLastActive: { 9: NOW - 60_000 } }).close,
+    ).toEqual([]);
     // A protected member (active) blocks the group close
     const withActive = [idle[0]!, { ...idle[1]!, active: true }];
     expect(planCleanup({ tabs: withActive, groups, settings: s, now: NOW }).close).toEqual([]);

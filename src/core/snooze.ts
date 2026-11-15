@@ -48,7 +48,7 @@ export function presetWakeTime(preset: SnoozePreset, now: number): number {
       return atHour(d, 1, MORNING_HOUR);
     case 'nextWeek': {
       // Next Monday morning; on a Monday that is a week away.
-      const daysToMonday = ((8 - d.getDay()) % 7) || 7;
+      const daysToMonday = (8 - d.getDay()) % 7 || 7;
       return atHour(d, daysToMonday, MORNING_HOUR);
     }
   }
@@ -61,7 +61,8 @@ export function parseLocalDateTime(value: string): number | null {
   const [y, mo, d, h, mi, s] = m.slice(1).map((x) => (x === undefined ? 0 : Number(x))) as number[];
   const date = new Date(y!, mo! - 1, d!, h!, mi!, s!, 0);
   // Reject overflow such as 2026-02-31 that Date silently rolls over.
-  if (date.getMonth() !== mo! - 1 || date.getDate() !== d! || date.getHours() !== h! || date.getMinutes() !== mi!) return null;
+  if (date.getMonth() !== mo! - 1 || date.getDate() !== d! || date.getHours() !== h! || date.getMinutes() !== mi!)
+    return null;
   return date.getTime();
 }
 

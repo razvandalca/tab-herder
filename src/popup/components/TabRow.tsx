@@ -20,7 +20,9 @@ export function TabRow({ tab, showWindow }: { tab: TabSnapshot; showWindow?: boo
     <div class={`item clickable ${tab.active ? 'active' : ''}`} role="listitem" onClick={jump} title={tab.url}>
       <Favicon src={tab.favIconUrl} />
       <div class="grow">
-        <div class="ellipsis" style={tab.discarded ? 'opacity: 0.6' : ''}>{tab.title || tab.url}</div>
+        <div class="ellipsis" style={tab.discarded ? 'opacity: 0.6' : ''}>
+          {tab.title || tab.url}
+        </div>
         <div class="ellipsis small muted">
           {host}
           {showWindow ? ' · other window' : ''}
@@ -28,7 +30,9 @@ export function TabRow({ tab, showWindow }: { tab: TabSnapshot; showWindow?: boo
           {tab.pinned ? ' · pinned' : ''}
         </div>
       </div>
-      <button class="btn icon" title="Close tab" aria-label={`Close ${tab.title}`} onClick={close}><Icons.x /></button>
+      <button class="btn icon" title="Close tab" aria-label={`Close ${tab.title}`} onClick={close}>
+        <Icons.x />
+      </button>
     </div>
   );
 }

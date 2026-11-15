@@ -16,14 +16,23 @@ export function Allowlist({ value, onChange }: { value: string[]; onChange: (v: 
   return (
     <div class="stack">
       <form class="row" onSubmit={add}>
-        <input class="input grow" placeholder="example.com" value={text} onInput={(e) => setText((e.target as HTMLInputElement).value)} />
-        <button class="btn" type="submit">Add</button>
+        <input
+          class="input grow"
+          placeholder="example.com"
+          value={text}
+          onInput={(e) => setText((e.target as HTMLInputElement).value)}
+        />
+        <button class="btn" type="submit">
+          Add
+        </button>
       </form>
       <div class="chips">
         {value.map((d) => (
           <span class="chip" key={d}>
             {d}
-            <button type="button" aria-label={`Remove ${d}`} onClick={() => onChange(value.filter((x) => x !== d))}><Icons.x /></button>
+            <button type="button" aria-label={`Remove ${d}`} onClick={() => onChange(value.filter((x) => x !== d))}>
+              <Icons.x />
+            </button>
           </span>
         ))}
         {value.length === 0 && <span class="muted small">Empty</span>}

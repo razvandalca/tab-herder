@@ -1,7 +1,15 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
-  AUTOSAVE_KEEP_MAX, autosaveLabel, buildAutosaveWindows, buildWindowSnapshot, clampKeep, fingerprint, hash,
-  pruneAutosaves, shouldAutosave, tabCount,
+  AUTOSAVE_KEEP_MAX,
+  autosaveLabel,
+  buildAutosaveWindows,
+  buildWindowSnapshot,
+  clampKeep,
+  fingerprint,
+  hash,
+  pruneAutosaves,
+  shouldAutosave,
+  tabCount,
 } from '@/core/autosave';
 import type { Autosave, WindowSnapshot } from '@/shared/types';
 import { group, resetIds, tab } from './helpers';
@@ -42,7 +50,9 @@ describe('buildWindowSnapshot', () => {
   });
 
   it('can drop favicons', () => {
-    const w = buildWindowSnapshot([tab({ url: 'https://a.com', favIconUrl: 'data:image/png;base64,xx' })], [], { favicons: false });
+    const w = buildWindowSnapshot([tab({ url: 'https://a.com', favIconUrl: 'data:image/png;base64,xx' })], [], {
+      favicons: false,
+    });
     expect(w.ungrouped[0]).not.toHaveProperty('favIconUrl');
   });
 });
@@ -73,7 +83,9 @@ describe('buildAutosaveWindows', () => {
 describe('fingerprint / change detection', () => {
   const base = (): WindowSnapshot[] => [
     {
-      groups: [{ title: 'Dev', color: 'blue', collapsed: false, tabs: [{ url: 'https://a.com', title: 'A', pinned: false }] }],
+      groups: [
+        { title: 'Dev', color: 'blue', collapsed: false, tabs: [{ url: 'https://a.com', title: 'A', pinned: false }] },
+      ],
       ungrouped: [{ url: 'https://b.com', title: 'B', pinned: false }],
     },
   ];

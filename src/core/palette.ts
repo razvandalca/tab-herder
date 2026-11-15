@@ -53,9 +53,27 @@ export function buildCommands(
   const others = groups.filter((g) => g.windowId !== currentWindowId);
   const windowId = currentWindowId;
   const cmds: PaletteCommand[] = [
-    { id: 'groupNow', label: () => 'Group now', keywords: 'group tabs auto', request: () => ({ type: 'groupNow' }), done: 'Tabs grouped' },
-    { id: 'cleanupNow', label: () => 'Clean up', keywords: 'cleanup discard inactive', request: () => ({ type: 'cleanupNow' }), done: 'Cleaned up' },
-    { id: 'closeDuplicates', label: () => 'Close duplicates', keywords: 'dedupe duplicate tabs', request: () => ({ type: 'closeDuplicates' }), done: 'Duplicates closed' },
+    {
+      id: 'groupNow',
+      label: () => 'Group now',
+      keywords: 'group tabs auto',
+      request: () => ({ type: 'groupNow' }),
+      done: 'Tabs grouped',
+    },
+    {
+      id: 'cleanupNow',
+      label: () => 'Clean up',
+      keywords: 'cleanup discard inactive',
+      request: () => ({ type: 'cleanupNow' }),
+      done: 'Cleaned up',
+    },
+    {
+      id: 'closeDuplicates',
+      label: () => 'Close duplicates',
+      keywords: 'dedupe duplicate tabs',
+      request: () => ({ type: 'closeDuplicates' }),
+      done: 'Duplicates closed',
+    },
     {
       id: 'saveSession',
       label: (arg) => (arg ? `Save session ${quote(arg)}` : 'Save session (this window)'),
@@ -68,21 +86,51 @@ export function buildCommands(
   // Snooze the active tab; the wake time is computed when the command runs.
   for (const p of SNOOZE_PRESETS) {
     const preset = p.id;
-    cmds.push({ id: `snoozeTab:${preset}`, label: () => `Snooze this tab: ${p.label.toLowerCase()}`, keywords: 'snooze later remind tab', request: () => ({ type: 'snoozeTab', wakeAt: presetWakeTime(preset, Date.now()) }), done: 'Tab snoozed' });
+    cmds.push({
+      id: `snoozeTab:${preset}`,
+      label: () => `Snooze this tab: ${p.label.toLowerCase()}`,
+      keywords: 'snooze later remind tab',
+      request: () => ({ type: 'snoozeTab', wakeAt: presetWakeTime(preset, Date.now()) }),
+      done: 'Tab snoozed',
+    });
   }
   // Switching profile only changes which rules apply; it never regroups by itself.
   if (profiles.length > 1) {
     for (const p of profiles) {
       if (p.id === activeProfileId) continue;
       const id = p.id;
-      cmds.push({ id: `profile:${id}`, label: () => `Switch to profile ${quote(p.name)}`, keywords: 'profile rules switch use', request: () => ({ type: 'switchProfile', id }), done: `Profile: ${p.name}. Press Group now to apply` });
+      cmds.push({
+        id: `profile:${id}`,
+        label: () => `Switch to profile ${quote(p.name)}`,
+        keywords: 'profile rules switch use',
+        request: () => ({ type: 'switchProfile', id }),
+        done: `Profile: ${p.name}. Press Group now to apply`,
+      });
     }
   }
   if (here.length > 0) {
     cmds.push(
-      { id: 'collapseAll', label: () => 'Collapse all groups', keywords: 'collapse all', request: () => ({ type: 'collapseAll', windowId, collapsed: true }), done: 'Collapsed' },
-      { id: 'expandAll', label: () => 'Expand all groups', keywords: 'expand all', request: () => ({ type: 'collapseAll', windowId, collapsed: false }), done: 'Expanded' },
-      { id: 'ungroupAll', label: () => 'Ungroup all', keywords: 'ungroup all groups', request: () => ({ type: 'ungroupAll', windowId }), done: 'Ungrouped' },
+      {
+        id: 'collapseAll',
+        label: () => 'Collapse all groups',
+        keywords: 'collapse all',
+        request: () => ({ type: 'collapseAll', windowId, collapsed: true }),
+        done: 'Collapsed',
+      },
+      {
+        id: 'expandAll',
+        label: () => 'Expand all groups',
+        keywords: 'expand all',
+        request: () => ({ type: 'collapseAll', windowId, collapsed: false }),
+        done: 'Expanded',
+      },
+      {
+        id: 'ungroupAll',
+        label: () => 'Ungroup all',
+        keywords: 'ungroup all groups',
+        request: () => ({ type: 'ungroupAll', windowId }),
+        done: 'Ungrouped',
+      },
       {
         id: 'closeAllGroups',
         label: () => 'Close all groups',
@@ -93,7 +141,13 @@ export function buildCommands(
       },
     );
     for (const [key, by] of Object.entries(GROUP_SORT_LABELS) as Array<[GroupSortKey, string]>) {
-      cmds.push({ id: `sortGroups:${key}`, label: () => `Sort groups ${by.toLowerCase()}`, keywords: 'sort order groups', request: () => ({ type: 'sortGroups', windowId, key }), done: 'Groups sorted' });
+      cmds.push({
+        id: `sortGroups:${key}`,
+        label: () => `Sort groups ${by.toLowerCase()}`,
+        keywords: 'sort order groups',
+        request: () => ({ type: 'sortGroups', windowId, key }),
+        done: 'Groups sorted',
+      });
     }
   }
   for (const g of [...here, ...others]) {
@@ -101,26 +155,55 @@ export function buildCommands(
     const where = g.windowId === currentWindowId ? '' : ' (other window)';
     const groupId = g.id;
     cmds.push(
-      { id: `closeGroup:${groupId}`, label: () => `Close group ${name}${where}`, request: () => ({ type: 'closeGroup', groupId }), done: 'Group closed' },
-      { id: `ungroup:${groupId}`, label: () => `Ungroup ${name}${where}`, request: () => ({ type: 'ungroup', groupId }), done: 'Ungrouped' },
-      { id: `move:${groupId}`, label: () => `Move ${name} to new window${where}`, request: () => ({ type: 'moveGroupToNewWindow', groupId }), done: 'Moved to new window' },
+      {
+        id: `closeGroup:${groupId}`,
+        label: () => `Close group ${name}${where}`,
+        request: () => ({ type: 'closeGroup', groupId }),
+        done: 'Group closed',
+      },
+      {
+        id: `ungroup:${groupId}`,
+        label: () => `Ungroup ${name}${where}`,
+        request: () => ({ type: 'ungroup', groupId }),
+        done: 'Ungrouped',
+      },
+      {
+        id: `move:${groupId}`,
+        label: () => `Move ${name} to new window${where}`,
+        request: () => ({ type: 'moveGroupToNewWindow', groupId }),
+        done: 'Moved to new window',
+      },
       g.collapsed
-        ? { id: `expand:${groupId}`, label: () => `Expand group ${name}${where}`, request: () => ({ type: 'setCollapsed', groupId, collapsed: false }), done: 'Expanded' }
-        : { id: `collapse:${groupId}`, label: () => `Collapse group ${name}${where}`, request: () => ({ type: 'setCollapsed', groupId, collapsed: true }), done: 'Collapsed' },
-      ...(Object.entries(TAB_SORT_LABELS) as Array<[TabSortKey, string]>).map(([key, by]): PaletteCommand => ({
-        id: `sortTabs:${groupId}:${key}`,
-        label: () => `Sort tabs in ${name} ${by.toLowerCase()}${where}`,
-        keywords: 'sort order tabs',
-        request: () => ({ type: 'sortGroupTabs', groupId, key }),
-        done: 'Sorted',
-      })),
-      ...SNOOZE_PRESETS.map(({ id: preset, label }): PaletteCommand => ({
-        id: `snoozeGroup:${groupId}:${preset}`,
-        label: () => `Snooze ${name}: ${label.toLowerCase()}${where}`,
-        keywords: 'snooze later remind group',
-        request: () => ({ type: 'snoozeGroup', groupId, wakeAt: presetWakeTime(preset, Date.now()) }),
-        done: 'Group snoozed',
-      })),
+        ? {
+            id: `expand:${groupId}`,
+            label: () => `Expand group ${name}${where}`,
+            request: () => ({ type: 'setCollapsed', groupId, collapsed: false }),
+            done: 'Expanded',
+          }
+        : {
+            id: `collapse:${groupId}`,
+            label: () => `Collapse group ${name}${where}`,
+            request: () => ({ type: 'setCollapsed', groupId, collapsed: true }),
+            done: 'Collapsed',
+          },
+      ...(Object.entries(TAB_SORT_LABELS) as Array<[TabSortKey, string]>).map(
+        ([key, by]): PaletteCommand => ({
+          id: `sortTabs:${groupId}:${key}`,
+          label: () => `Sort tabs in ${name} ${by.toLowerCase()}${where}`,
+          keywords: 'sort order tabs',
+          request: () => ({ type: 'sortGroupTabs', groupId, key }),
+          done: 'Sorted',
+        }),
+      ),
+      ...SNOOZE_PRESETS.map(
+        ({ id: preset, label }): PaletteCommand => ({
+          id: `snoozeGroup:${groupId}:${preset}`,
+          label: () => `Snooze ${name}: ${label.toLowerCase()}${where}`,
+          keywords: 'snooze later remind group',
+          request: () => ({ type: 'snoozeGroup', groupId, wakeAt: presetWakeTime(preset, Date.now()) }),
+          done: 'Group snoozed',
+        }),
+      ),
     );
   }
   return cmds;

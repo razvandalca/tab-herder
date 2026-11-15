@@ -10,11 +10,7 @@ import { hasContentPermission, probeTabs } from './contentScripts';
 export async function regroupWindow(windowId: number, settings?: Settings): Promise<number> {
   const s = settings ?? (await getSettings());
   if (s.mode === 'off') return 0;
-  const [tabs, groups, state] = await Promise.all([
-    allTabs({ windowId }),
-    allGroups({ windowId }),
-    getSessionState(),
-  ]);
+  const [tabs, groups, state] = await Promise.all([allTabs({ windowId }), allGroups({ windowId }), getSessionState()]);
   const managedGroupIds = new Set(Object.keys(state.managedGroups).map(Number));
   const overriddenTabIds = new Set(Object.keys(state.overrides).map(Number));
 
@@ -48,7 +44,9 @@ export async function applyActions(actions: GroupAction[]): Promise<number> {
     switch (a.type) {
       case 'create': {
         await markPendingMoves(a.tabIds);
-        const groupId = await quietly(chrome.tabs.group({ tabIds: tuple(a.tabIds), createProperties: { windowId: a.windowId } }));
+        const groupId = await quietly(
+          chrome.tabs.group({ tabIds: tuple(a.tabIds), createProperties: { windowId: a.windowId } }),
+        );
         if (groupId === undefined) break;
         await markManagedGroup(groupId, a.title.toLowerCase());
         await quietly(chrome.tabGroups.update(groupId, { title: a.title, color: a.color }));

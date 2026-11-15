@@ -24,9 +24,7 @@ export function findDuplicates(tabs: TabSnapshot[]): DuplicateSet[] {
   for (const [key, list] of byKey) {
     if (list.length < 2) continue;
     const keeper = pickKeeper(list);
-    const close = list
-      .filter((t) => t.id !== keeper.id && !t.pinned && !t.audible)
-      .map((t) => t.id);
+    const close = list.filter((t) => t.id !== keeper.id && !t.pinned && !t.audible).map((t) => t.id);
     if (close.length) sets.push({ key, keep: keeper.id, close });
   }
   return sets;

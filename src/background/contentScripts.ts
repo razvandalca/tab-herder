@@ -13,7 +13,13 @@ export async function registerContentScript(): Promise<boolean> {
   const existing = await chrome.scripting.getRegisteredContentScripts({ ids: [SCRIPT_ID] });
   if (existing.length === 0) {
     await chrome.scripting.registerContentScripts([
-      { id: SCRIPT_ID, js: [contentScript], matches: ['<all_urls>'], runAt: 'document_idle', persistAcrossSessions: true },
+      {
+        id: SCRIPT_ID,
+        js: [contentScript],
+        matches: ['<all_urls>'],
+        runAt: 'document_idle',
+        persistAcrossSessions: true,
+      },
     ]);
   }
   return true;
