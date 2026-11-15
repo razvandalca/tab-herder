@@ -8,6 +8,9 @@
     "dev": "vite",
     "build": "vite build",
     "typecheck": "tsc --noEmit",
+    "lint": "biome lint .",
+    "format": "biome format --write .",
+    "check": "biome check .",
     "test": "vitest run",
     "test:watch": "vitest",
     "coverage": "vitest run --coverage",
@@ -17,6 +20,7 @@
     "screenshots": "node scripts/store-screenshots.mjs"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.6.7",
     "@crxjs/vite-plugin": "^3.0.0",
     "@preact/preset-vite": "^2.10.6",
     "@types/chrome": "^0.3.7",

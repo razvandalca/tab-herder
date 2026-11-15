@@ -1,7 +1,7 @@
 // End-to-end smoke test: loads dist/ into Chromium (Playwright), opens fake pages for several
 // domains via request interception, and exercises grouping, rules, overrides, duplicates,
 // cleanup, sessions, group actions and import. Run: bun run build && bun run e2e
-// (needs: bunx playwright install chromium)
+// (needs: bunx playwright install chromium). Runs in CI as the "e2e" job in .github/workflows/ci.yml.
 import { chromium } from 'playwright';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -83,7 +83,7 @@ const devTabs = async () => (await tabsOf('Dev')).sort((a, b) => a.index - b.ind
 const byTitle = (await devTabs()).map((t) => t.title).sort((a, b) => a.localeCompare(b));
 r = await send({ type: 'sortGroupTabs', groupId: dev.id, key: 'title' });
 await sleep(300);
-let sortedDev = await devTabs();
+const sortedDev = await devTabs();
 check(r.ok && JSON.stringify(sortedDev.map((t) => t.title)) === JSON.stringify(byTitle), `sort by title reorders Dev tabs: ${sortedDev.map((t) => t.title)}`);
 await api((id) => chrome.tabs.move(id, { index: -1 }), (await tabs()).find((t) => t.url.startsWith('chrome-extension')).id);
 const win0 = (await api(() => chrome.windows.getCurrent())).id;
@@ -117,7 +117,7 @@ check(r.ok && r.result === 1, `closeDuplicates closed 1 (${JSON.stringify(r)})`)
 check((await tabs()).filter((t) => t.url.includes('example.com')).length === 1, 'one example.com tab remains');
 let local = await api(() => chrome.storage.local.get(null));
 check(local.recentlyCleaned?.length === 1 && local.recentlyCleaned[0].reason === 'duplicate', 'recently cleaned has the duplicate');
-let stats = await send({ type: 'getStats' });
+const stats = await send({ type: 'getStats' });
 check(stats.ok && stats.result.cleanedThisWeek === 1, `stats cleanedThisWeek=1 (${JSON.stringify(stats)})`);
 
 // 5. Restore cleaned
@@ -168,6 +168,28 @@ check(!(await groups()).find((g) => g.id === video.id), 'save & close removed th
 local = await api(() => chrome.storage.local.get(null));
 check(local.sessions.some((s) => s.name === 'Vids session' && s.kind === 'group'), 'group session saved');
 
+// 8b. Close all groups is undoable (and restorable later from Sessions)
+const beforeClose = (await groups()).filter((g) => g.windowId === win.id).map((g) => [g.title, g.color]).sort();
+r = await send({ type: 'closeAllGroups', windowId: win.id });
+await sleep(500);
+check(r.ok && r.result.closed === beforeClose.length && r.result.undo.length === 1, `close all returns undo ids (${JSON.stringify(r.result)})`);
+check((await groups()).filter((g) => g.windowId === win.id).length === 0, 'close all removed the groups');
+local = await api(() => chrome.storage.local.get(null));
+check(local.sessions.some((s) => s.autoSaved && s.id === r.result.undo[0]), 'closed groups auto-saved as a session');
+r = await send({ type: 'undoClose', ids: r.result.undo });
+await sleep(1500);
+const afterUndo = (await groups()).filter((g) => g.windowId === win.id).map((g) => [g.title, g.color]).sort();
+check(r.ok && JSON.stringify(afterUndo) === JSON.stringify(beforeClose), `undo restored groups in the same window: ${JSON.stringify(afterUndo)}`);
+local = await api(() => chrome.storage.local.get(null));
+check(!local.sessions.some((s) => s.autoSaved), 'undo removes the auto-saved entry');
+const devGroup = (await groups()).find((g) => g.title === 'Dev' && g.windowId === win.id);
+r = await send({ type: 'closeGroup', groupId: devGroup.id });
+await sleep(300);
+check(r.ok && r.result.undo.length === 1 && !(await groups()).some((g) => g.title === 'Dev'), 'close group is recorded for undo');
+r = await send({ type: 'undoClose', ids: r.result.undo });
+await sleep(1500);
+check((await groups()).some((g) => g.title === 'Dev' && g.color === 'blue' && g.windowId === win.id), 'undo close group restores title/colour');
+
 // 9. Cleanup: inactivity discard + allowlist + per-group auto-close
 await api(() => chrome.storage.sync.set({ settings: { mode: 'manual', cleanup: { enabled: true, intervalMinutes: 15, inactiveHours: 0.0001, inactiveAction: 'discard', closeDuplicates: true, allowlist: ['stackoverflow.com'], detectUnsavedForms: false } } }));
 await sleep(1500);
@@ -196,6 +218,27 @@ await sleep(200);
 await popup.screenshot({ path: join(OUT, 'popup-search.png') });
 const errors = [];
 popup.on('pageerror', (e) => errors.push(e.message));
+// Popup toast offers Undo after Close all
+// Playwright opens the page in its own window; move it next to the groups so "this window" has some.
+await popup.evaluate(async (windowId) => {
+  const me = await chrome.tabs.getCurrent();
+  await chrome.tabs.move(me.id, { windowId, index: -1 });
+  await chrome.tabs.update(me.id, { active: true });
+}, win.id);
+await popup.reload();
+await sleep(600);
+const popupWin = await popup.evaluate(async () => (await chrome.windows.getCurrent()).id);
+const groupsBeforeUi = (await groups()).filter((g) => g.windowId === popupWin).length;
+if (groupsBeforeUi > 0) {
+  await popup.getByRole('button', { name: 'Close all', exact: true }).click();
+  await popup.getByRole('button', { name: /^Close \d+ groups\?$/ }).click();
+  await popup.getByRole('button', { name: 'Undo' }).waitFor({ timeout: 3000 });
+  await popup.screenshot({ path: join(OUT, 'popup-undo.png') });
+  check((await groups()).filter((g) => g.windowId === popupWin).length === 0, 'popup Close all closed the groups');
+  await popup.getByRole('button', { name: 'Undo' }).click();
+  await sleep(1500);
+  check((await groups()).filter((g) => g.windowId === popupWin).length === groupsBeforeUi, 'popup Undo restored the groups');
+} else check(false, `expected groups in the popup window ${popupWin} (win ${win.id}): ${JSON.stringify((await groups()).map((g) => [g.title, g.windowId]))}`);
 await ext.goto(`chrome-extension://${extId}/src/options/index.html#rules`);
 await sleep(500);
 await ext.screenshot({ path: join(OUT, 'options-rules.png'), fullPage: true });

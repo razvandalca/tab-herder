@@ -26,7 +26,14 @@ export type Request =
   | { type: 'importData'; data: ExportFile; rulesMode: 'replace' | 'append' }
   | { type: 'setContentScript'; enabled: boolean }
   | { type: 'sortGroupTabs'; groupId: number; key: TabSortKey }
-  | { type: 'sortGroups'; windowId: number; key: GroupSortKey };
+  | { type: 'sortGroups'; windowId: number; key: GroupSortKey }
+  | { type: 'undoClose'; ids: string[] };
+
+/** Result of closeGroup / closeAllGroups: how many were closed, and auto-saved session ids for Undo. */
+export interface CloseResult {
+  closed: number;
+  undo: string[];
+}
 
 export interface Stats {
   openTabs: number;
