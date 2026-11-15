@@ -1,0 +1,33 @@
+import type { Settings } from './types';
+
+export const RECENTLY_CLEANED_MAX = 100;
+export const STATS_RETENTION_DAYS = 30;
+export const GROUPING_DEBOUNCE_MS = 750;
+export const CLEANUP_ALARM = 'tab-herder:cleanup';
+
+export const DEFAULT_SETTINGS: Settings = {
+  mode: 'manual',
+  groupByDomain: true,
+  mergeSubdomains: true,
+  minGroupSize: 2,
+  includeIncognito: false,
+  contentGrouping: false,
+  badge: { enabled: true, threshold: 30 },
+  cleanup: {
+    enabled: true,
+    intervalMinutes: 15,
+    inactiveHours: 12,
+    inactiveAction: 'discard',
+    closeDuplicates: true,
+    allowlist: [],
+    detectUnsavedForms: false,
+  },
+  rules: [],
+};
+
+/** Generates a short random id; good enough for rules/sessions (not security-sensitive). */
+export function newId(): string {
+  const bytes = new Uint8Array(8);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+}
