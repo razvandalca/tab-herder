@@ -1,7 +1,7 @@
 // End-to-end smoke test: loads dist/ into Chromium (Playwright), opens fake pages for several
 // domains via request interception, and exercises grouping, rules, overrides, duplicates,
 // cleanup, sessions, group actions and import. Run: bun run build && bun run e2e
-// (needs: bunx playwright install chromium)
+// (needs: bunx playwright install chromium). Runs in CI as the "e2e" job in .github/workflows/ci.yml.
 import { chromium } from 'playwright';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -78,6 +78,32 @@ check(dev && dev.color === 'blue' && (await tabsOf('Dev')).length === 3, `Dev ru
 check(!gs.find((g) => g.title === 'github.com'), 'old github.com managed group gone');
 check(gs.find((g) => g.title === 'Video')?.color === 'red', 'Video glob rule group is red');
 
+// 2b. Sorting tabs within a group and groups within a window
+const devTabs = async () => (await tabsOf('Dev')).sort((a, b) => a.index - b.index);
+const byTitle = (await devTabs()).map((t) => t.title).sort((a, b) => a.localeCompare(b));
+r = await send({ type: 'sortGroupTabs', groupId: dev.id, key: 'title' });
+await sleep(300);
+const sortedDev = await devTabs();
+check(r.ok && JSON.stringify(sortedDev.map((t) => t.title)) === JSON.stringify(byTitle), `sort by title reorders Dev tabs: ${sortedDev.map((t) => t.title)}`);
+await api((id) => chrome.tabs.move(id, { index: -1 }), (await tabs()).find((t) => t.url.startsWith('chrome-extension')).id);
+const win0 = (await api(() => chrome.windows.getCurrent())).id;
+const groupOrder = async () => {
+  const ts = await tabs();
+  const first = (g) => Math.min(...ts.filter((t) => t.groupId === g.id).map((t) => t.index));
+  return (await groups()).filter((g) => g.windowId === win0).sort((a, b) => first(a) - first(b)).map((g) => g.title);
+};
+r = await send({ type: 'sortGroups', windowId: win0, key: 'size' });
+await sleep(300);
+check(r.ok && (await groupOrder())[0] === 'Dev', `sort groups by size puts Dev (3 tabs) first: ${await groupOrder()}`);
+r = await send({ type: 'sortGroups', windowId: win0, key: 'name' });
+await sleep(300);
+const names = await groupOrder();
+check(r.ok && JSON.stringify(names) === JSON.stringify([...names].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))), `sort groups by name: ${names}`);
+check((await tabs()).find((t) => t.url.startsWith('chrome-extension')).index === (await tabs()).length - 1, 'ungrouped tab at the end stays at the end');
+check((await tabsOf('Dev')).length === 3, 'Dev keeps its 3 tabs after sorting');
+const sess = await api(() => chrome.storage.session.get('overrides'));
+check(Object.keys(sess.overrides ?? {}).length === 0, `sorting recorded no manual overrides (${JSON.stringify(sess.overrides)})`);
+
 // 3. Manual override: user pulls a tab out of Dev -> never regrouped
 const pulled = (await tabsOf('Dev'))[0];
 await api((id) => chrome.tabs.ungroup(id), pulled.id);
@@ -91,7 +117,7 @@ check(r.ok && r.result === 1, `closeDuplicates closed 1 (${JSON.stringify(r)})`)
 check((await tabs()).filter((t) => t.url.includes('example.com')).length === 1, 'one example.com tab remains');
 let local = await api(() => chrome.storage.local.get(null));
 check(local.recentlyCleaned?.length === 1 && local.recentlyCleaned[0].reason === 'duplicate', 'recently cleaned has the duplicate');
-let stats = await send({ type: 'getStats' });
+const stats = await send({ type: 'getStats' });
 check(stats.ok && stats.result.cleanedThisWeek === 1, `stats cleanedThisWeek=1 (${JSON.stringify(stats)})`);
 
 // 5. Restore cleaned
@@ -133,11 +159,11 @@ check(r.ok && r.result && r.result.windows.length >= 1, 'autosaveNow created a s
 const firstAuto = r.result;
 r = await send({ type: 'autosaveNow' });
 check(r.ok && r.result === null, 'unchanged windows are not saved again');
-const extra = await open('https://example.org/autosave');
+const autosaveTab = await open('https://example.org/autosave');
 await sleep(300);
 r = await send({ type: 'autosaveNow' });
 check(r.ok && r.result, 'a new tab triggers a new snapshot');
-await extra.close();
+await autosaveTab.close();
 await sleep(300);
 r = await send({ type: 'autosaveNow' });
 local = await api(() => chrome.storage.local.get(null));
@@ -179,6 +205,28 @@ check(!(await groups()).find((g) => g.id === video.id), 'save & close removed th
 local = await api(() => chrome.storage.local.get(null));
 check(local.sessions.some((s) => s.name === 'Vids session' && s.kind === 'group'), 'group session saved');
 
+// 8b. Close all groups is undoable (and restorable later from Sessions)
+const beforeClose = (await groups()).filter((g) => g.windowId === win.id).map((g) => [g.title, g.color]).sort();
+r = await send({ type: 'closeAllGroups', windowId: win.id });
+await sleep(500);
+check(r.ok && r.result.closed === beforeClose.length && r.result.undo.length === 1, `close all returns undo ids (${JSON.stringify(r.result)})`);
+check((await groups()).filter((g) => g.windowId === win.id).length === 0, 'close all removed the groups');
+local = await api(() => chrome.storage.local.get(null));
+check(local.sessions.some((s) => s.autoSaved && s.id === r.result.undo[0]), 'closed groups auto-saved as a session');
+r = await send({ type: 'undoClose', ids: r.result.undo });
+await sleep(1500);
+const afterUndo = (await groups()).filter((g) => g.windowId === win.id).map((g) => [g.title, g.color]).sort();
+check(r.ok && JSON.stringify(afterUndo) === JSON.stringify(beforeClose), `undo restored groups in the same window: ${JSON.stringify(afterUndo)}`);
+local = await api(() => chrome.storage.local.get(null));
+check(!local.sessions.some((s) => s.autoSaved), 'undo removes the auto-saved entry');
+const devGroup = (await groups()).find((g) => g.title === 'Dev' && g.windowId === win.id);
+r = await send({ type: 'closeGroup', groupId: devGroup.id });
+await sleep(300);
+check(r.ok && r.result.undo.length === 1 && !(await groups()).some((g) => g.title === 'Dev'), 'close group is recorded for undo');
+r = await send({ type: 'undoClose', ids: r.result.undo });
+await sleep(1500);
+check((await groups()).some((g) => g.title === 'Dev' && g.color === 'blue' && g.windowId === win.id), 'undo close group restores title/colour');
+
 // 9. Cleanup: inactivity discard + allowlist + per-group auto-close
 await api(() => chrome.storage.sync.set({ settings: { mode: 'manual', cleanup: { enabled: true, intervalMinutes: 15, inactiveHours: 0.0001, inactiveAction: 'discard', closeDuplicates: true, allowlist: ['stackoverflow.com'], detectUnsavedForms: false } } }));
 await sleep(1500);
@@ -207,6 +255,82 @@ await sleep(200);
 await popup.screenshot({ path: join(OUT, 'popup-search.png') });
 const errors = [];
 popup.on('pageerror', (e) => errors.push(e.message));
+// Popup toast offers Undo after Close all
+// Playwright opens the page in its own window; move it next to the groups so "this window" has some.
+await popup.evaluate(async (windowId) => {
+  const me = await chrome.tabs.getCurrent();
+  await chrome.tabs.move(me.id, { windowId, index: -1 });
+  await chrome.tabs.update(me.id, { active: true });
+}, win.id);
+await popup.reload();
+await sleep(600);
+const popupWin = await popup.evaluate(async () => (await chrome.windows.getCurrent()).id);
+const groupsBeforeUi = (await groups()).filter((g) => g.windowId === popupWin).length;
+if (groupsBeforeUi > 0) {
+  await popup.getByRole('button', { name: 'Close all', exact: true }).click();
+  await popup.getByRole('button', { name: /^Close \d+ groups\?$/ }).click();
+  await popup.getByRole('button', { name: 'Undo' }).waitFor({ timeout: 3000 });
+  await popup.screenshot({ path: join(OUT, 'popup-undo.png') });
+  check((await groups()).filter((g) => g.windowId === popupWin).length === 0, 'popup Close all closed the groups');
+  await popup.getByRole('button', { name: 'Undo' }).click();
+  await sleep(1500);
+  check((await groups()).filter((g) => g.windowId === popupWin).length === groupsBeforeUi, 'popup Undo restored the groups');
+} else check(false, `expected groups in the popup window ${popupWin} (win ${win.id}): ${JSON.stringify((await groups()).map((g) => [g.title, g.windowId]))}`);
+
+// 12. Command palette: `>` switches to commands; keyboard runs them; close-all needs a second Enter
+// (the popup tab was moved into `win` above)
+await send({ type: 'collapseAll', windowId: win.id, collapsed: false });
+await sleep(200);
+const search = popup.locator('input[type=search]');
+await search.fill('>');
+await sleep(150);
+check(await popup.locator('[role=listbox][aria-label=Commands]').isVisible(), 'typing > shows the command palette');
+await search.fill('> save session Palette');
+await sleep(150);
+check((await popup.locator('[role=option][aria-selected=true]').textContent())?.includes('Save session “Palette”'), 'save session parses the name argument');
+await search.press('Enter');
+await sleep(500);
+local = await api(() => chrome.storage.local.get(null));
+check(local.sessions.some((s) => s.name === 'Palette' && s.kind === 'window'), 'palette saved a named session');
+check((await search.inputValue()) === '', 'running a command returns to tab search');
+await search.fill('> collapse all');
+await sleep(150);
+await search.press('Enter');
+await sleep(400);
+check((await groups()).filter((g) => g.windowId === win.id).every((g) => g.collapsed), 'palette collapse all');
+const groupsInPopupWin = async () => (await groups()).filter((g) => g.windowId === win.id).length;
+const beforePaletteClose = await groupsInPopupWin();
+await search.fill('> close all groups');
+await sleep(150);
+await search.press('Enter');
+await sleep(300);
+check((await popup.locator('[role=option][aria-selected=true]').textContent())?.includes('Press Enter again'), 'close all groups asks for confirmation');
+check((await groupsInPopupWin()) === beforePaletteClose, 'first Enter does not close groups');
+await search.press('Escape');
+await sleep(100);
+check((await search.inputValue()) === '' && !(await popup.locator('[role=listbox][aria-label=Commands]').count()), 'Esc leaves the palette');
+
+// 13. Side panel page: same UI, registered in the manifest, no popup-only button, live updates
+const manifest = await api(() => chrome.runtime.getManifest());
+check(manifest.side_panel?.default_path === 'src/sidepanel/index.html' && manifest.permissions.includes('sidePanel'), 'manifest declares side panel + sidePanel permission');
+const panelOpts = await api(() => chrome.sidePanel.getOptions({}));
+check(panelOpts.enabled !== false && panelOpts.path === 'src/sidepanel/index.html', `side panel enabled with default path (${JSON.stringify(panelOpts)})`);
+check(await popup.locator('button[aria-label="Open in side panel"]').count() === 1, 'popup header has an Open in side panel button');
+const panel = await context.newPage();
+panel.on('pageerror', (e) => errors.push(e.message));
+await panel.setViewportSize({ width: 320, height: 800 });
+await panel.goto(`chrome-extension://${extId}/src/sidepanel/index.html`);
+await sleep(600);
+check(await panel.locator('body.sidepanel h1', { hasText: 'Tab Herder' }).count() === 1, 'side panel page renders the app');
+check(await panel.locator('button[aria-label="Open in side panel"]').count() === 0, 'side panel hides the open-in-side-panel button');
+const tabStat = async () => Number(await panel.locator('.stat b').first().textContent());
+const n0 = await tabStat();
+const extra = await open('https://live-update.example.org/');
+await sleep(800);
+check(await tabStat() === n0 + 1, `side panel updates live when a tab opens (${n0} -> ${await tabStat()})`);
+await extra.close();
+await panel.screenshot({ path: join(OUT, 'sidepanel.png') });
+await panel.close();
 await ext.goto(`chrome-extension://${extId}/src/options/index.html#rules`);
 await sleep(500);
 await ext.screenshot({ path: join(OUT, 'options-rules.png'), fullPage: true });
@@ -217,7 +341,7 @@ await ext.goto(`chrome-extension://${extId}/src/options/index.html#sessions`);
 await sleep(500);
 check((await ext.locator('[data-testid=autosaves]').textContent()).includes('Autosave – '), 'Sessions panel lists autosaves');
 await ext.screenshot({ path: join(OUT, 'options-sessions.png'), fullPage: true });
-check(errors.length === 0, `no page errors in popup (${errors.join('; ')})`);
+check(errors.length === 0, `no page errors in popup / side panel (${errors.join('; ')})`);
 
 console.log(failures === 0 ? '\nALL CHECKS PASSED' : `\n${failures} CHECK(S) FAILED`);
 await context.close();

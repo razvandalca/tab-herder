@@ -3,6 +3,7 @@ import type { Autosave, AutosaveSettings, LocalState, Session, Settings } from '
 import { send } from '@/shared/messages';
 import { COLOR_HEX } from '@/core/colors';
 import { AUTOSAVE_KEEP_MAX, autosaveLabel, clampKeep, tabCount as windowTabs } from '@/core/autosave';
+import { CLOSED_SESSIONS_MAX } from '@/shared/defaults';
 import type { PanelProps } from '../App';
 
 interface Props extends PanelProps {
@@ -48,7 +49,7 @@ export function SessionsPanel({ local, settings, save, notify, fail }: Props) {
           <input class="input grow" placeholder="Session name" value={saveName} onInput={(e) => setSaveName((e.target as HTMLInputElement).value)} />
           <button class="btn primary" type="submit">Save</button>
         </form>
-        <div class="hint">You can also save a single group from the popup menu or the right-click menu (“Save &amp; close”).</div>
+        <div class="hint">You can also save a single group from the popup menu or the right-click menu (“Save &amp; close”). Groups closed with “Close all” or “Close group” are kept here automatically (the last {CLOSED_SESSIONS_MAX}) so you can restore them.</div>
       </div>
       <div class="card">
         <h2>Saved sessions <span class="badge">{local.sessions.length}</span></h2>
@@ -65,7 +66,7 @@ export function SessionsPanel({ local, settings, save, notify, fail }: Props) {
               ) : (
                 <div class="grow">
                   <b>{s.name}</b>
-                  <div class="small muted">{s.kind === 'window' ? 'Window' : 'Group'} · {tabCount(s)} tabs · {new Date(s.createdAt).toLocaleString()}</div>
+                  <div class="small muted">{s.autoSaved ? 'Closed groups (auto-saved)' : s.kind === 'window' ? 'Window' : 'Group'} · {tabCount(s)} tabs · {new Date(s.createdAt).toLocaleString()}</div>
                 </div>
               )}
               <div class="row" style="gap: 4px">
@@ -86,7 +87,7 @@ export function SessionsPanel({ local, settings, save, notify, fail }: Props) {
       <div class="card" data-testid="autosaves">
         <div class="row between">
           <h2>Autosaves <span class="badge">{autosaves.length}</span></h2>
-          <button class="btn" onClick={() => void snapshotNow()}>Snapshot now</button>
+          <button type="button" class="btn" onClick={() => void snapshotNow()}>Snapshot now</button>
         </div>
         <label class="check">
           <input type="checkbox" checked={a.enabled} onChange={(e) => void setAutosave({ enabled: (e.target as HTMLInputElement).checked })} />
@@ -117,8 +118,8 @@ export function SessionsPanel({ local, settings, save, notify, fail }: Props) {
                   <div class="small muted">{s.windows.length} {s.windows.length === 1 ? 'window' : 'windows'} · {tabs} tabs</div>
                 </div>
                 <div class="row" style="gap: 4px">
-                  <button class="btn sm primary" onClick={() => act(s.windows.length === 1 ? 'Restored in a new window' : `Restored ${s.windows.length} windows`, send({ type: 'restoreAutosave', id: s.id }))}>Restore</button>
-                  <button class="btn sm danger" onClick={() => act('Deleted', send({ type: 'deleteAutosave', id: s.id }))}>Delete</button>
+                  <button type="button" class="btn sm primary" onClick={() => act(s.windows.length === 1 ? 'Restored in a new window' : `Restored ${s.windows.length} windows`, send({ type: 'restoreAutosave', id: s.id }))}>Restore</button>
+                  <button type="button" class="btn sm danger" onClick={() => act('Deleted', send({ type: 'deleteAutosave', id: s.id }))}>Delete</button>
                 </div>
               </div>
               <div class="chips">

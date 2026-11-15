@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   AUTOSAVE_KEEP_MAX, autosaveLabel, buildAutosaveWindows, buildWindowSnapshot, clampKeep, fingerprint, hash,
-  isSavableUrl, pruneAutosaves, shouldAutosave, tabCount,
+  pruneAutosaves, shouldAutosave, tabCount,
 } from '@/core/autosave';
 import type { Autosave, WindowSnapshot } from '@/shared/types';
 import { group, resetIds, tab } from './helpers';
@@ -13,16 +13,6 @@ const autosave = (createdAt: number, windows: WindowSnapshot[] = []): Autosave =
   createdAt,
   fingerprint: fingerprint(windows),
   windows,
-});
-
-describe('isSavableUrl', () => {
-  it('accepts web and file URLs only', () => {
-    expect(isSavableUrl('https://a.com')).toBe(true);
-    expect(isSavableUrl('http://a.com')).toBe(true);
-    expect(isSavableUrl('file:///tmp/x')).toBe(true);
-    expect(isSavableUrl('chrome://newtab/')).toBe(false);
-    expect(isSavableUrl('')).toBe(false);
-  });
 });
 
 describe('buildWindowSnapshot', () => {

@@ -19,3 +19,6 @@ release/
 
 # Test coverage (bun run coverage)
 coverage/
+
+# E2E screenshots/log when OUT=e2e-out (CI)
+e2e-out/

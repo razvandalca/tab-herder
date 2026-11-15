@@ -1,6 +1,8 @@
 import type { Settings } from './types';
 
 export const RECENTLY_CLEANED_MAX = 100;
+/** How many auto-saved "closed groups" sessions to keep for Undo / restore later. */
+export const CLOSED_SESSIONS_MAX = 20;
 export const STATS_RETENTION_DAYS = 30;
 export const GROUPING_DEBOUNCE_MS = 750;
 export const CLEANUP_ALARM = 'tab-herder:cleanup';

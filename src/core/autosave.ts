@@ -1,18 +1,13 @@
 // Pure helpers for scheduled window snapshots (autosaves). No chrome.* here.
 import type { Autosave, GroupSnapshot, SavedGroup, SavedTab, TabSnapshot, WindowSnapshot } from '@/shared/types';
 import { NO_GROUP } from '@/shared/types';
+import { isSavable, toSavedTab } from './sessions';
 
 export const AUTOSAVE_KEEP_MAX = 20;
 
-/** chrome:// and similar pages cannot be reopened by extensions. */
-export function isSavableUrl(url: string): boolean {
-  return /^(https?|ftp|file):/.test(url);
-}
-
-export function toSavedTab(t: TabSnapshot, opts: { favicons?: boolean } = {}): SavedTab {
-  const saved: SavedTab = { url: t.url, title: t.title, pinned: t.pinned };
-  if (opts.favicons !== false && t.favIconUrl) saved.favIconUrl = t.favIconUrl;
-  return saved;
+function toSaved(t: TabSnapshot, opts: { favicons?: boolean }): SavedTab {
+  const { favIconUrl, ...saved } = toSavedTab(t);
+  return opts.favicons !== false && favIconUrl ? { ...saved, favIconUrl } : saved;
 }
 
 /** Turns one window's tabs and groups into the stored session shape (tab order preserved). */
@@ -24,11 +19,11 @@ export function buildWindowSnapshot(
   const byGroup = new Map<number, SavedTab[]>();
   const ungrouped: SavedTab[] = [];
   for (const t of [...tabs].sort((a, b) => a.index - b.index)) {
-    if (!isSavableUrl(t.url)) continue;
-    if (t.groupId === NO_GROUP) ungrouped.push(toSavedTab(t, opts));
+    if (!isSavable(t)) continue;
+    if (t.groupId === NO_GROUP) ungrouped.push(toSaved(t, opts));
     else {
       const list = byGroup.get(t.groupId) ?? [];
-      list.push(toSavedTab(t, opts));
+      list.push(toSaved(t, opts));
       byGroup.set(t.groupId, list);
     }
   }
