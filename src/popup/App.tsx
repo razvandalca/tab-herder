@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'preact/hooks';
 import { fuzzySearch } from '@/core/fuzzy';
-import { send } from '@/shared/messages';
+import { send, type CloseResult } from '@/shared/messages';
 import { NO_GROUP } from '@/shared/types';
 import { errorMessage, useBrowserState, useLocal, useStats, useToast } from '@/ui/hooks';
 import { Icons } from '@/ui/icons';
@@ -15,7 +15,7 @@ export function App() {
   const [browser, refresh] = useBrowserState();
   const local = useLocal();
   const [query, setQuery] = useState('');
-  const [toast, showToast] = useToast();
+  const [toast, showToast, toastAction, dismissToast] = useToast();
   const [tick, setTick] = useState(0);
   const stats = useStats([tick, browser?.tabs.length, browser?.groups.length, local?.stats]);
 
@@ -28,7 +28,13 @@ export function App() {
   async function run(label: string, fn: () => Promise<unknown>) {
     try {
       const r = await fn();
-      showToast(typeof r === 'number' ? `${label}: ${r}` : label);
+      if (isCloseResult(r)) {
+        const undo = r.undo;
+        showToast(`${label}: ${r.closed}`, undo.length ? { label: 'Undo', onClick: () => {
+          dismissToast();
+          void run('Groups restored', () => send({ type: 'undoClose', ids: undo }));
+        } } : undefined);
+      } else showToast(typeof r === 'number' ? `${label}: ${r}` : label);
       refresh();
       setTick((t) => t + 1);
     } catch (e) {
@@ -80,12 +86,21 @@ export function App() {
               </div>
             </details>
           )}
-          {local && <RecentlyCleaned entries={local.recentlyCleaned} run={run} />}
+          {local && <RecentlyCleaned entries={local.recentlyCleaned} closed={local.sessions.filter((s) => s.autoSaved)} run={run} />}
         </>
       )}
-      {toast && <div class="toast" role="status">{toast}</div>}
+      {toast && (
+        <div class="toast" role="status">
+          {toast}
+          {toastAction && <button class="toast-action" onClick={toastAction.onClick}>{toastAction.label}</button>}
+        </div>
+      )}
     </div>
   );
+}
+
+function isCloseResult(r: unknown): r is CloseResult {
+  return typeof r === 'object' && r !== null && typeof (r as CloseResult).closed === 'number' && Array.isArray((r as CloseResult).undo);
 }
 
 export type Runner = (label: string, fn: () => Promise<unknown>) => Promise<void>;

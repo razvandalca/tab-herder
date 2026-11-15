@@ -23,7 +23,14 @@ export type Request =
   | { type: 'restoreCleaned'; id: string }
   | { type: 'clearCleaned' }
   | { type: 'importData'; data: ExportFile; rulesMode: 'replace' | 'append' }
-  | { type: 'setContentScript'; enabled: boolean };
+  | { type: 'setContentScript'; enabled: boolean }
+  | { type: 'undoClose'; ids: string[] };
+
+/** Result of closeGroup / closeAllGroups: how many were closed, and auto-saved session ids for Undo. */
+export interface CloseResult {
+  closed: number;
+  undo: string[];
+}
 
 export interface Stats {
   openTabs: number;
