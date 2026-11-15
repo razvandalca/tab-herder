@@ -17,6 +17,9 @@ jobs:
     name: Typecheck, unit tests, build
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: write # coverage comment
     steps:
       - uses: actions/checkout@v5
 
@@ -30,8 +33,42 @@ jobs:
       - name: Typecheck
         run: bun run typecheck
 
-      - name: Unit tests
-        run: bun run test
+      - name: Unit tests with coverage
+        run: bun run coverage
+
+      - name: Write coverage comment
+        if: always() && hashFiles('coverage/coverage-summary.json') != ''
+        run: bun scripts/coverage-comment.mjs "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+      # One sticky comment per PR: edited on every push instead of adding new ones.
+      # Skipped for Dependabot and fork PRs, whose token can't write comments.
+      - name: Post coverage comment on PR
+        if: >-
+          always() && github.event_name == 'pull_request'
+          && github.event.pull_request.head.repo.full_name == github.repository
+          && github.actor != 'dependabot[bot]'
+          && hashFiles('coverage/comment.md') != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          id=$(gh api "repos/$REPO/issues/$PR/comments" --paginate \
+            --jq '[.[] | select(.user.login == "github-actions[bot]" and (.body | startswith("<!-- coverage-report -->")))][0].id // empty' | head -n1)
+          if [ -n "$id" ]; then
+            gh api -X PATCH "repos/$REPO/issues/comments/$id" -F body=@coverage/comment.md > /dev/null
+            echo "Updated coverage comment $id"
+          else
+            gh pr comment "$PR" --repo "$REPO" --body-file coverage/comment.md
+          fi
+
+      - name: Upload coverage report
+        if: always() && hashFiles('coverage/index.html') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 14
 
       - name: Build extension
         run: bun run build
