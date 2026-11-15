@@ -22,8 +22,9 @@ export default defineManifest({
     },
   },
   options_page: 'src/options/index.html',
+  side_panel: { default_path: 'src/sidepanel/index.html' },
   background: { service_worker: 'src/background/index.ts', type: 'module' },
-  permissions: ['tabs', 'tabGroups', 'storage', 'alarms', 'contextMenus'],
+  permissions: ['tabs', 'tabGroups', 'storage', 'alarms', 'contextMenus', 'sidePanel'],
   optional_permissions: ['scripting'],
   optional_host_permissions: ['<all_urls>'],
   incognito: 'spanning',
@@ -39,6 +40,10 @@ export default defineManifest({
     'close-duplicates': {
       suggested_key: { default: 'Alt+Shift+D' },
       description: 'Close duplicate tabs',
+    },
+    'open-side-panel': {
+      // No suggested key: Chrome allows at most 4 and all are taken. Users can bind one.
+      description: 'Open Tab Herder in the side panel',
     },
     _execute_action: {
       suggested_key: { default: 'Alt+Shift+F' },

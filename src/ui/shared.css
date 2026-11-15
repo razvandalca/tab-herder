@@ -33,6 +33,8 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; background: var(--bg); color: var(--fg); font: 13px/1.4 var(--font); }
 body.popup { width: 380px; min-height: 200px; max-height: 580px; overflow-y: auto; }
+/* side panel: same UI, but fills the panel's width and height */
+body.popup.sidepanel { width: auto; min-height: 100vh; max-height: none; }
 body.options { padding: 0; }
 button, input, select, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; }

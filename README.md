@@ -53,6 +53,7 @@ policy) is in [docs/publishing.md](docs/publishing.md) and [docs/store-listing.m
 | `storage` | Settings and rules in `chrome.storage.sync`; sessions, stats and the "recently cleaned" list in `chrome.storage.local`; short-lived bookkeeping in `chrome.storage.session`. |
 | `alarms` | Run the cleanup pass on a schedule even though the MV3 service worker is not always running. |
 | `contextMenus` | The "Tab Herder" right-click submenu on pages and on the toolbar icon. |
+| `sidePanel` | Show the same Tab Herder view in Chrome's side panel so search and the group list stay open while you browse. |
 | `scripting` + `<all_urls>` (**optional**: `optional_permissions` / `optional_host_permissions`) | Only requested, with a Chrome prompt, when you enable **Never touch tabs with unsaved form input** or **Group by content**. It injects a tiny script that watches for typing in forms and reads the page's meta description. Nothing is sent anywhere. Turning both features off releases the permission. |
 
 Keyboard shortcuts (`commands`) need no permission. Incognito tabs are ignored unless you enable
@@ -105,6 +106,11 @@ Sort the tabs in a group by title, domain or last used (group menu `⋮` → Sor
 in a window by name or size (Sort groups row in the popup). Both are also in the right-click menu.
 Ungrouped tabs keep their place between groups, and sorting never counts as a manual move.
 
+### Side panel
+The same view can live in Chrome's side panel, so it stays open and updates as tabs change. Open it
+with the panel button in the popup header, **Tab Herder → Open in side panel** in the right-click
+menu, or Chrome's own side panel menu. Clicking a tab there switches to it without closing the panel.
+
 ### Keyboard shortcuts
 | Action | Default |
 |---|---|
@@ -112,6 +118,7 @@ Ungrouped tabs keep their place between groups, and sorting never counts as a ma
 | Close the current tab's group | `Alt+Shift+W` |
 | Close duplicate tabs | `Alt+Shift+D` |
 | Open tab search (popup) | `Alt+Shift+F` |
+| Open in side panel | not set (Chrome allows four suggested keys; bind one yourself) |
 
 Remap them at `chrome://extensions/shortcuts`. On macOS, Alt is Option.
 

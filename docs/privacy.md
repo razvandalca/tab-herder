@@ -22,7 +22,7 @@ To do its job the extension reads, inside your browser:
 - **Tab and tab group information** — the URL, title, favicon URL, pinned/audible/active state and
   window of each open tab, and the title, colour and collapsed state of each tab group. This is used
   to match your grouping rules, find duplicates, decide which tabs are inactive, and show the tab list
-  and search in the popup.
+  and search in the popup and side panel.
 - **Page content, only if you opt in** — if you turn on **Never touch tabs with unsaved form input** or
   **Group by content**, Chrome will first ask you to grant an extra permission. Only then does Tab
   Herder add a small script to web pages. That script:

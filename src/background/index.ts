@@ -77,7 +77,7 @@ chrome.alarms.onAlarm.addListener((alarm) => {
     void runCleanup().then((r) => log('cleanup', r));
   }
 });
-chrome.commands.onCommand.addListener((command) => void handleCommand(command));
+chrome.commands.onCommand.addListener((command, tab) => void handleCommand(command, tab));
 chrome.contextMenus.onClicked.addListener((info, tab) => void handleContextMenu(info, tab));
 installMessageRouter();
 

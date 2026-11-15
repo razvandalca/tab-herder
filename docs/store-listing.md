@@ -47,6 +47,7 @@ SESSIONS
 
 POPUP AND SHORTCUTS
 • Fuzzy search across all open tabs and jump to any of them.
+• Open the same view in Chrome's side panel to keep it open while you browse.
 • Group actions: close, save & close, collapse/expand, ungroup, rename, recolour, move to a new
   window — also from the right-click menu.
 • Keyboard shortcuts: Alt+Shift+G group now, Alt+Shift+W close current group, Alt+Shift+D close
@@ -108,7 +109,8 @@ entry and one "host permission" box for the host access.
 | `tabGroups` | `permissions` | Core feature: creates tab groups and renames, recolours, collapses, ungroups and moves them to a new window, and restores saved groups with their original names and colours. |
 | `storage` | `permissions` | Stores the user's settings and rules (`chrome.storage.sync`), saved sessions, the "Recently cleaned" restore list and a daily cleanup count (`chrome.storage.local`), and short-lived state such as which groups the extension created (`chrome.storage.session`). Nothing is sent to a server. |
 | `alarms` | `permissions` | Runs the scheduled cleanup pass (default every 15 minutes, user-configurable), which also applies per-group auto-close, because the Manifest V3 service worker is not always running. |
-| `contextMenus` | `permissions` | Adds a "Tab Herder" submenu to the page and toolbar-icon right-click menus for tab and group actions: group all tabs now, close / save & close / move this tab's group, collapse, expand, ungroup or close all groups, close duplicates, clean up now. |
+| `contextMenus` | `permissions` | Adds a "Tab Herder" submenu to the page and toolbar-icon right-click menus for tab and group actions: group all tabs now, close / save & close / move this tab's group, collapse, expand, ungroup or close all groups, close duplicates, clean up now, open the side panel. |
+| `sidePanel` | `permissions` | Shows the same Tab Herder view (tab search, groups in this window, quick actions) in Chrome's side panel, so it can stay open while the user browses. Opened only when the user clicks the panel button in the popup, the "Open in side panel" right-click entry, a shortcut they bound themselves, or Chrome's side panel menu. Reads nothing beyond what the popup already shows. |
 | `scripting` | `optional_permissions` | Optional, requested at runtime only when the user enables "Never touch tabs with unsaved form input" or "Group by content". Used to register one bundled content script that flags whether the user typed into a form (the text itself is never read) and reads the page's meta description for the local content classifier. Removed again when both options are turned off. |
 | `<all_urls>` | `optional_host_permissions` | Optional, requested together with `scripting` for the same two opt-in features: the content script has to run on whichever site the user has open to protect unsaved form input or classify the page. It is not granted at install, and the extension works fully without it. |
 
@@ -116,7 +118,7 @@ Not permissions, but reviewers sometimes ask:
 
 - `commands` (keyboard shortcuts) and `incognito: "spanning"` need no permission. Incognito tabs are
   skipped unless the user enables them in settings **and** allows the extension in incognito.
-- `options_page` and `action` popup are bundled pages.
+- `options_page`, the `action` popup and the `side_panel` page are bundled pages.
 
 ### Remote code
 
