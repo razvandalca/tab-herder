@@ -54,7 +54,15 @@ export interface Settings {
   contentGrouping: boolean;
   badge: { enabled: boolean; threshold: number };
   cleanup: CleanupSettings;
+  autosave: AutosaveSettings;
   rules: Rule[];
+}
+
+export interface AutosaveSettings {
+  enabled: boolean;
+  intervalMinutes: number;
+  /** How many autosaves to keep (oldest are pruned). */
+  keep: number;
 }
 
 export interface SavedTab {
@@ -78,6 +86,22 @@ export interface Session {
   kind: 'window' | 'group';
   groups: SavedGroup[];
   ungrouped: SavedTab[];
+  /** Saved automatically when Tab Herder closed these groups (capped, oldest dropped first). */
+  autoSaved?: boolean;
+  /** Window the groups were closed from; Undo restores into it while it is still open. */
+  windowId?: number;
+}
+
+/** One window's contents, in the same shape sessions use. */
+export type WindowSnapshot = Pick<Session, 'groups' | 'ungrouped'>;
+
+/** Scheduled snapshot of every window; stored apart from user-saved sessions. */
+export interface Autosave {
+  id: string;
+  createdAt: number;
+  /** Hash of the restorable shape, used to skip saving when nothing changed. */
+  fingerprint: string;
+  windows: WindowSnapshot[];
 }
 
 export type CleanReason = 'duplicate' | 'inactive' | 'groupAutoClose';
@@ -103,6 +127,7 @@ export interface Stats {
 /** chrome.storage.local */
 export interface LocalState {
   sessions: Session[];
+  autosaves: Autosave[];
   recentlyCleaned: CleanedEntry[];
   stats: Stats;
 }

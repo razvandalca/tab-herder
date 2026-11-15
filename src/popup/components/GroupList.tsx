@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'preact/hooks';
 import type { GroupSnapshot, TabSnapshot } from '@/shared/types';
 import { send } from '@/shared/messages';
+import { GROUP_SORT_LABELS, type GroupSortKey } from '@/core/sorting';
 import type { Runner } from '../App';
 import { GroupRow } from './GroupRow';
 
@@ -52,6 +53,14 @@ export function GroupList({ tabs, groups, currentWindowId, run }: Props) {
           </div>
         )}
       </div>
+      {here.length > 1 && (
+        <div class="row small muted" style="gap: 2px; padding: 0 8px" role="group" aria-label="Sort groups">
+          <span style="margin-right: 4px">Sort groups</span>
+          {(Object.entries(GROUP_SORT_LABELS) as Array<[GroupSortKey, string]>).map(([key, label]) => (
+            <button key={key} class="btn sm" onClick={() => run('Groups sorted', () => send({ type: 'sortGroups', windowId: currentWindowId, key }))}>{label}</button>
+          ))}
+        </div>
+      )}
       {here.length === 0 && <div class="muted small" style="padding: 0 8px">No groups yet. Press “Group now” to create some.</div>}
       <div class="list" role="list">
         {here.map((g) => <GroupRow key={g.id} group={g} tabs={byGroup.get(g.id) ?? []} run={run} />)}

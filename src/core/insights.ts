@@ -233,7 +233,7 @@ export function summarize(
 /** A "nice" axis maximum >= v: 1, 2, 5 × 10^k. */
 export function niceMax(v: number): number {
   if (!(v > 0)) return 1;
-  const exp = Math.pow(10, Math.floor(Math.log10(v)));
+  const exp = 10 ** Math.floor(Math.log10(v));
   for (const m of [1, 2, 5, 10]) if (m * exp >= v) return m * exp;
   /* c8 ignore next */
   return 10 * exp;

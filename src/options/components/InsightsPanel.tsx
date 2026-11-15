@@ -72,7 +72,7 @@ export function InsightsPanel({ local, notify, fail }: Props) {
           <h2>Insights</h2>
           <div class="row" role="group" aria-label="Time range">
             {RANGES.map((r) => (
-              <button key={r} class={`btn sm${range === r ? ' primary' : ''}`} aria-pressed={range === r} onClick={() => setRange(r)}>
+              <button type="button" key={r} class={`btn sm${range === r ? ' primary' : ''}`} aria-pressed={range === r} onClick={() => setRange(r)}>
                 {r} days
               </button>
             ))}
@@ -88,7 +88,7 @@ export function InsightsPanel({ local, notify, fail }: Props) {
             <input type="checkbox" checked={!data.paused} onChange={(e) => void togglePaused(!(e.target as HTMLInputElement).checked)} />
             <span class="title">Collect insights</span>
           </label>
-          <button class="btn sm danger" onClick={() => void clear()}>Clear insights data</button>
+          <button type="button" class="btn sm danger" onClick={() => void clear()}>Clear insights data</button>
         </div>
       </div>
 
@@ -231,9 +231,9 @@ function HBars({ rows, empty }: { rows: Array<[string, number]>; empty: string }
   const width = 360;
   const barW = width - labelW - valueW;
   return (
-    <svg class="hbars" viewBox={`0 0 ${width} ${rows.length * rowH}`} role="list">
+    <svg class="hbars" viewBox={`0 0 ${width} ${rows.length * rowH}`} role="img" aria-label={rows.map(([l, v]) => `${l}: ${fmt(v)}`).join(', ')}>
       {rows.map(([label, v], i) => (
-        <g key={label} role="listitem" transform={`translate(0,${i * rowH})`}>
+        <g key={label} transform={`translate(0,${i * rowH})`}>
           <title>{`${label}: ${fmt(v)}`}</title>
           <text x={0} y={15} class="label">{label.length > 20 ? `${label.slice(0, 19)}…` : label}</text>
           <rect x={labelW} y={5} width={Math.max(2, (v / max) * barW)} height={12} rx={2} style="fill: var(--chart-1)" />

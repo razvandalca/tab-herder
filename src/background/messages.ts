@@ -3,13 +3,15 @@ import { getLocal, cleanedInLastDays, updateSettings } from '@/shared/storage';
 import type { ExportFile, Rule, Settings } from '@/shared/types';
 import { regroupAll, regroupWindow } from './grouping';
 import { clearCleaned, closeDuplicatesNow, restoreCleaned, runCleanup } from './cleanup';
-import { deleteSession, renameSession, restoreSession, saveGroupSession, saveWindowSession } from './sessions';
+import { deleteSession, renameSession, restoreSession, saveGroupSession, saveWindowSession, undoClose } from './sessions';
 import {
   closeAllGroups, closeGroup, moveGroupToNewWindow, recolorGroup, renameGroup, saveAndCloseGroup, setCollapsed,
   setCollapsedAll, ungroup, ungroupAll,
 } from './groupActions';
 import { registerContentScript, unregisterContentScript } from './contentScripts';
 import { clearInsights, setInsightsPaused } from './insights';
+import { deleteAutosave, restoreAutosave, runAutosave } from './autosave';
+import { sortGroupsInWindow, sortTabsInGroup } from './sorting';
 import { patchLocal } from '@/shared/storage';
 import { withDefaults } from '@/shared/storage';
 import { DEFAULT_SETTINGS, newId } from '@/shared/defaults';
@@ -32,6 +34,12 @@ export async function handleRequest(req: Request): Promise<unknown> {
       return deleteSession(req.id);
     case 'renameSession':
       return renameSession(req.id, req.name);
+    case 'autosaveNow':
+      return runAutosave({ force: true });
+    case 'restoreAutosave':
+      return restoreAutosave(req.id);
+    case 'deleteAutosave':
+      return deleteAutosave(req.id);
     case 'closeGroup':
       return closeGroup(req.groupId);
     case 'saveAndCloseGroup':
@@ -60,6 +68,12 @@ export async function handleRequest(req: Request): Promise<unknown> {
       return importData(req.data, req.rulesMode);
     case 'setContentScript':
       return req.enabled ? registerContentScript() : unregisterContentScript();
+    case 'sortGroupTabs':
+      return sortTabsInGroup(req.groupId, req.key);
+    case 'sortGroups':
+      return sortGroupsInWindow(req.windowId, req.key);
+    case 'undoClose':
+      return undoClose(req.ids);
     case 'clearInsights':
       return clearInsights();
     case 'setInsightsPaused':
