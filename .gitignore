@@ -16,3 +16,6 @@ release/
 # Env
 .env
 .env.*
+
+# Test coverage (bun run coverage)
+coverage/
