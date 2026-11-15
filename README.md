@@ -64,6 +64,8 @@ them in settings *and* allow the extension in incognito on `chrome://extensions`
 - **Minimum group size** avoids one-tab groups. Existing groups still accept single tabs.
 - **Presets:** Dev, Docs, Social, Video, Shopping, Mail/Calendar, Cloud consoles. Add them from the
   Rules tab; duplicates are skipped.
+- **Profiles:** keep separate rule sets (e.g. Work and Personal), managed on the Rules tab. Switch
+  the active one from the popup; existing groups stay as they are until you press *Group now*.
 - **Respects you:** pinned tabs are never touched. A tab you drag into or out of a group by hand is
   remembered and never regrouped. Groups you created yourself are left alone (though tabs may join
   them if the group title matches an assignment). `chrome://` and extension pages are ignored.
@@ -130,14 +132,18 @@ Tips:
 
 ```json
 {
-  "version": 1,
+  "version": 2,
   "exportedAt": 1760000000000,
-  "settings": { "mode": "auto", "rules": [ { "id": "…", "name": "Dev", "matchType": "domain", "pattern": "github.com", "color": "blue", "enabled": true } ], "...": "..." },
+  "settings": { "mode": "auto", "rules": [ { "id": "…", "name": "Dev", "matchType": "domain", "pattern": "github.com", "color": "blue", "enabled": true } ],
+                "activeProfileId": "default", "profiles": [ { "id": "default", "name": "Default", "rules": [ "…" ] } ], "...": "..." },
   "sessions": [ { "id": "…", "name": "Research", "kind": "window", "createdAt": 1760000000000,
                   "groups": [ { "title": "Docs", "color": "cyan", "collapsed": false, "tabs": [ { "url": "…", "title": "…", "pinned": false } ] } ],
                   "ungrouped": [] } ]
 }
 ```
+
+Version 2 files add `profiles` and `activeProfileId`; version 1 files (rules only) still import into
+the active profile.
 
 ## Project layout
 
@@ -145,6 +151,7 @@ Tips:
 manifest.config.ts    MV3 manifest (crxjs)
 src/core/             pure logic, no chrome.* calls, fully unit-tested
   rules.ts            rule engine: url + title in, group assignment out
+  profiles.ts         rule profiles: sync storage layout, migration, import merge
   url.ts              hostname / base domain / URL normalisation
   glob.ts             match-pattern globs
   duplicates.ts       duplicate detection

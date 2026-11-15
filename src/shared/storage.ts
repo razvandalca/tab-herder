@@ -1,10 +1,13 @@
 import type { LocalState, SessionState, Settings } from './types';
 import { DEFAULT_SETTINGS } from './defaults';
+import { CHUNK_PREFIX, decodeProfiles, encodeSync } from '@/core/profiles';
 
 /*
  * Layout
- *   chrome.storage.sync:    { settings: Settings-without-rules, rules: Rule[] }
- *     (rules live under their own key so a long rule list does not hit the 8 KB per-item quota)
+ *   chrome.storage.sync:    { settings: Settings-without-rules, rules: Rule[] (active profile),
+ *                             profiles: index, "rules:<id>:<n>": chunks of inactive profiles }
+ *     (rules live under their own keys so long rule lists do not hit the 8 KB per-item quota;
+ *      see src/core/profiles.ts)
  *   chrome.storage.local:   { sessions, recentlyCleaned, stats }
  *   chrome.storage.session: { managedGroups, overrides, pendingMoves, lastActive, groupLastActive }
  */
@@ -38,15 +41,18 @@ export function withDefaults<T extends object>(value: unknown, defaults: T): T {
 // ---------- settings (sync) ----------
 
 export async function getSettings(): Promise<Settings> {
-  const raw = await chrome.storage.sync.get(['settings', 'rules']);
+  const raw = await chrome.storage.sync.get(null);
   const settings = withDefaults<Settings>(raw.settings, DEFAULT_SETTINGS);
-  settings.rules = Array.isArray(raw.rules) ? raw.rules : [];
-  return settings;
+  return { ...settings, ...decodeProfiles(raw) };
 }
 
 export async function saveSettings(settings: Settings): Promise<void> {
-  const { rules, ...rest } = settings;
-  await chrome.storage.sync.set({ settings: rest, rules });
+  const raw = await chrome.storage.sync.get(null);
+  const { items, remove } = encodeSync(settings, Object.keys(raw));
+  // Only write what changed, to stay well inside the sync write-rate quotas.
+  const changed = Object.fromEntries(Object.entries(items).filter(([k, v]) => JSON.stringify(raw[k]) !== JSON.stringify(v)));
+  if (Object.keys(changed).length) await chrome.storage.sync.set(changed);
+  if (remove.length) await chrome.storage.sync.remove(remove);
 }
 
 export async function updateSettings(patch: (s: Settings) => Settings | void): Promise<Settings> {
@@ -59,7 +65,10 @@ export async function updateSettings(patch: (s: Settings) => Settings | void): P
 export function onSettingsChanged(cb: (settings: Settings) => void): () => void {
   const listener = (changes: Record<string, chrome.storage.StorageChange>, area: string) => {
     if (area !== 'sync') return;
-    if ('settings' in changes || 'rules' in changes) void getSettings().then(cb);
+    const keys = Object.keys(changes);
+    if (keys.some((k) => k === 'settings' || k === 'rules' || k === 'profiles' || k.startsWith(CHUNK_PREFIX))) {
+      void getSettings().then(cb);
+    }
   };
   chrome.storage.onChanged.addListener(listener);
   return () => chrome.storage.onChanged.removeListener(listener);

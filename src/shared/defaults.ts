@@ -23,6 +23,8 @@ export const DEFAULT_SETTINGS: Settings = {
     detectUnsavedForms: false,
   },
   rules: [],
+  profiles: [{ id: 'default', name: 'Default', rules: [] }],
+  activeProfileId: 'default',
 };
 
 /** Generates a short random id; good enough for rules/sessions (not security-sensitive). */

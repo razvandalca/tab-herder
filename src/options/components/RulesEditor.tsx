@@ -5,6 +5,8 @@ import { assignGroup, resolveColor } from '@/core/rules';
 import { PRESETS, rulesFromPreset } from '@/shared/presets';
 import { Icons } from '@/ui/icons';
 import { RuleForm } from './RuleForm';
+import { ProfileBar } from './ProfileBar';
+import { profileRules, setProfileRules } from '@/core/profiles';
 
 interface Props {
   settings: Settings;
@@ -13,14 +15,17 @@ interface Props {
 }
 
 export function RulesEditor({ settings, save, notify }: Props) {
-  const rules = settings.rules;
+  const [profileId, setProfileId] = useState(settings.activeProfileId);
+  const editingId = settings.profiles.some((p) => p.id === profileId) ? profileId : settings.activeProfileId;
+  const rules = profileRules(settings, editingId);
+  const profileName = settings.profiles.find((p) => p.id === editingId)?.name ?? '';
   const [editing, setEditing] = useState<Rule | 'new' | null>(null);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [overIdx, setOverIdx] = useState<number | null>(null);
   const [testUrl, setTestUrl] = useState('');
   const [testTitle, setTestTitle] = useState('');
 
-  const setRules = (next: Rule[]) => save({ ...settings, rules: next });
+  const setRules = (next: Rule[]) => save(setProfileRules(settings, editingId, next));
 
   const move = (from: number, to: number) => {
     if (from === to || to < 0 || to >= rules.length) return;
@@ -48,15 +53,16 @@ export function RulesEditor({ settings, save, notify }: Props) {
   const testResult = useMemo(() => {
     if (!testUrl.trim()) return null;
     const url = /^[a-z]+:\/\//i.test(testUrl) ? testUrl : `https://${testUrl}`;
-    return assignGroup({ url, title: testTitle }, settings);
-  }, [testUrl, testTitle, settings]);
+    return assignGroup({ url, title: testTitle }, { ...settings, rules });
+  }, [testUrl, testTitle, settings, rules]);
 
   return (
     <section>
+      <ProfileBar settings={settings} save={save} notify={notify} selectedId={editingId} select={(id) => { setEditing(null); setProfileId(id); }} />
       <div class="card">
         <div class="row between">
           <div>
-            <h2>Rules</h2>
+            <h2>Rules{settings.profiles.length > 1 ? ` · ${profileName}` : ''}</h2>
             <div class="hint">Checked top to bottom; the first match wins. Drag to reorder.</div>
           </div>
           <button class="btn primary" onClick={() => setEditing('new')}>Add rule</button>

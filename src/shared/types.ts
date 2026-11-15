@@ -54,6 +54,17 @@ export interface Settings {
   contentGrouping: boolean;
   badge: { enabled: boolean; threshold: number };
   cleanup: CleanupSettings;
+  /** Rules of the active profile (the ones grouping uses). */
+  rules: Rule[];
+  /** All rule profiles. The active entry's `rules` is kept in step with `rules` above. */
+  profiles: RuleProfile[];
+  activeProfileId: string;
+}
+
+/** A named rule set (e.g. Work / Personal); only the active one is used for grouping. */
+export interface RuleProfile {
+  id: string;
+  name: string;
   rules: Rule[];
 }
 
@@ -114,8 +125,9 @@ export interface SessionState {
   groupLastActive: Record<number, number>;
 }
 
+/** Version 1 files carry `settings.rules` only; version 2 adds `settings.profiles`. */
 export interface ExportFile {
-  version: 1;
+  version: 1 | 2;
   exportedAt: number;
   settings?: Settings;
   sessions?: Session[];

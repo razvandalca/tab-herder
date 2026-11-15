@@ -10,6 +10,7 @@ import { QuickActions } from './components/QuickActions';
 import { GroupList } from './components/GroupList';
 import { TabRow } from './components/TabRow';
 import { RecentlyCleaned } from './components/RecentlyCleaned';
+import { ProfileSwitcher } from './components/ProfileSwitcher';
 
 export function App() {
   const [browser, refresh] = useBrowserState();
@@ -40,6 +41,7 @@ export function App() {
     <div class="app">
       <div class="row between">
         <h1>Tab Herder</h1>
+        <ProfileSwitcher notify={showToast} />
         <button class="btn icon" title="Settings" aria-label="Open settings" onClick={() => chrome.runtime.openOptionsPage()}>
           <Icons.gear />
         </button>
