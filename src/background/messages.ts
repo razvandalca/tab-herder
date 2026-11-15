@@ -9,6 +9,7 @@ import {
   setCollapsedAll, ungroup, ungroupAll,
 } from './groupActions';
 import { registerContentScript, unregisterContentScript } from './contentScripts';
+import { deleteAutosave, restoreAutosave, runAutosave } from './autosave';
 import { patchLocal } from '@/shared/storage';
 import { withDefaults } from '@/shared/storage';
 import { DEFAULT_SETTINGS, newId } from '@/shared/defaults';
@@ -31,6 +32,12 @@ export async function handleRequest(req: Request): Promise<unknown> {
       return deleteSession(req.id);
     case 'renameSession':
       return renameSession(req.id, req.name);
+    case 'autosaveNow':
+      return runAutosave({ force: true });
+    case 'restoreAutosave':
+      return restoreAutosave(req.id);
+    case 'deleteAutosave':
+      return deleteAutosave(req.id);
     case 'closeGroup':
       return closeGroup(req.groupId);
     case 'saveAndCloseGroup':

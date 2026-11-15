@@ -1,34 +1,16 @@
 import { newId } from '@/shared/defaults';
 import { getLocal, patchLocal } from '@/shared/storage';
-import type { SavedGroup, SavedTab, Session, TabSnapshot } from '@/shared/types';
-import { NO_GROUP } from '@/shared/types';
+import type { SavedGroup, SavedTab, Session, TabSnapshot, WindowSnapshot } from '@/shared/types';
+import { buildWindowSnapshot, isSavableUrl, toSavedTab } from '@/core/autosave';
 import { allGroups, allTabs, quietly, tuple } from './tabs';
 import { markPendingMoves } from './overrides';
 
-const toSaved = (t: TabSnapshot): SavedTab => ({ url: t.url, title: t.title, pinned: t.pinned, favIconUrl: t.favIconUrl });
+const toSaved = (t: TabSnapshot): SavedTab => toSavedTab(t);
+const savable = (t: TabSnapshot): boolean => isSavableUrl(t.url);
 
-function savable(t: TabSnapshot): boolean {
-  // chrome:// and similar pages cannot be reopened by extensions; skip empty new tabs too.
-  return /^(https?|ftp|file):/.test(t.url);
-}
-
-export async function snapshotWindow(windowId: number): Promise<Pick<Session, 'groups' | 'ungrouped'>> {
+export async function snapshotWindow(windowId: number): Promise<WindowSnapshot> {
   const [tabs, groups] = await Promise.all([allTabs({ windowId }), allGroups({ windowId })]);
-  const byGroup = new Map<number, SavedTab[]>();
-  const ungrouped: SavedTab[] = [];
-  for (const t of tabs.sort((a, b) => a.index - b.index)) {
-    if (!savable(t)) continue;
-    if (t.groupId === NO_GROUP) ungrouped.push(toSaved(t));
-    else {
-      const list = byGroup.get(t.groupId) ?? [];
-      list.push(toSaved(t));
-      byGroup.set(t.groupId, list);
-    }
-  }
-  const savedGroups: SavedGroup[] = groups
-    .filter((g) => byGroup.has(g.id))
-    .map((g) => ({ title: g.title, color: g.color, collapsed: g.collapsed, tabs: byGroup.get(g.id)! }));
-  return { groups: savedGroups, ungrouped };
+  return buildWindowSnapshot(tabs, groups);
 }
 
 export async function snapshotGroup(groupId: number): Promise<SavedGroup> {

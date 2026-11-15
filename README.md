@@ -88,6 +88,10 @@ Move group to a new window.
 Save the current window or a single group under a name, restore it later as a new window with the
 original group names and colours. Export and import sessions and rules as JSON (Import / Export tab).
 
+**Autosaves** (opt-in, Sessions tab): every N minutes Tab Herder snapshots all non-incognito windows —
+groups with titles and colours, tab URLs, ungrouped tabs — but only when something changed, keeps the
+last few (default 5) and lists them as "Autosave – <time>", restorable and deletable.
+
 ### Popup
 Fuzzy search across all open tabs (title and URL, type to filter, click to jump), groups in this
 window with tab counts, quick actions (Group now · Clean up · Close duplicates · Save session),
