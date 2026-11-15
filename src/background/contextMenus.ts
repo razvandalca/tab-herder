@@ -17,6 +17,8 @@ const items: Array<{ id: string; title: string }> = [
   { id: 'sep-2', title: '' },
   { id: 'close-duplicates', title: 'Close duplicate tabs' },
   { id: 'cleanup-now', title: 'Clean up now' },
+  { id: 'sep-3', title: '' },
+  { id: 'open-side-panel', title: 'Open in side panel' },
 ];
 
 export function installContextMenus(): void {
@@ -33,6 +35,11 @@ export function installContextMenus(): void {
 }
 
 export async function handleContextMenu(info: chrome.contextMenus.OnClickData, tab?: chrome.tabs.Tab): Promise<void> {
+  if (info.menuItemId === 'open-side-panel') {
+    // sidePanel.open needs the user gesture, so call it before any await.
+    await chrome.sidePanel.open({ windowId: tab?.windowId ?? chrome.windows.WINDOW_ID_CURRENT });
+    return;
+  }
   const groupId = tab?.groupId ?? NO_GROUP;
   const windowId = tab?.windowId ?? (await chrome.windows.getLastFocused()).id!;
   switch (info.menuItemId) {

@@ -170,13 +170,35 @@ await sleep(200);
 await popup.screenshot({ path: join(OUT, 'popup-search.png') });
 const errors = [];
 popup.on('pageerror', (e) => errors.push(e.message));
+
+// 12. Side panel page: same UI, registered in the manifest, no popup-only button, live updates
+const manifest = await api(() => chrome.runtime.getManifest());
+check(manifest.side_panel?.default_path === 'src/sidepanel/index.html' && manifest.permissions.includes('sidePanel'), 'manifest declares side panel + sidePanel permission');
+const panelOpts = await api(() => chrome.sidePanel.getOptions({}));
+check(panelOpts.enabled !== false && panelOpts.path === 'src/sidepanel/index.html', `side panel enabled with default path (${JSON.stringify(panelOpts)})`);
+check(await popup.locator('button[aria-label="Open in side panel"]').count() === 1, 'popup header has an Open in side panel button');
+const panel = await context.newPage();
+panel.on('pageerror', (e) => errors.push(e.message));
+await panel.setViewportSize({ width: 320, height: 800 });
+await panel.goto(`chrome-extension://${extId}/src/sidepanel/index.html`);
+await sleep(600);
+check(await panel.locator('body.sidepanel h1', { hasText: 'Tab Herder' }).count() === 1, 'side panel page renders the app');
+check(await panel.locator('button[aria-label="Open in side panel"]').count() === 0, 'side panel hides the open-in-side-panel button');
+const tabStat = async () => Number(await panel.locator('.stat b').first().textContent());
+const n0 = await tabStat();
+const extra = await open('https://live-update.example.org/');
+await sleep(800);
+check(await tabStat() === n0 + 1, `side panel updates live when a tab opens (${n0} -> ${await tabStat()})`);
+await extra.close();
+await panel.screenshot({ path: join(OUT, 'sidepanel.png') });
+await panel.close();
 await ext.goto(`chrome-extension://${extId}/src/options/index.html#rules`);
 await sleep(500);
 await ext.screenshot({ path: join(OUT, 'options-rules.png'), fullPage: true });
 await ext.goto(`chrome-extension://${extId}/src/options/index.html#cleanup`);
 await sleep(500);
 await ext.screenshot({ path: join(OUT, 'options-cleanup.png'), fullPage: true });
-check(errors.length === 0, `no page errors in popup (${errors.join('; ')})`);
+check(errors.length === 0, `no page errors in popup / side panel (${errors.join('; ')})`);
 
 console.log(failures === 0 ? '\nALL CHECKS PASSED' : `\n${failures} CHECK(S) FAILED`);
 await context.close();

@@ -4,6 +4,7 @@ import { send } from '@/shared/messages';
 import { NO_GROUP } from '@/shared/types';
 import { errorMessage, useBrowserState, useLocal, useStats, useToast } from '@/ui/hooks';
 import { Icons } from '@/ui/icons';
+import { isSidePanel, openSidePanel } from '@/ui/surface';
 import { SearchBox } from './components/SearchBox';
 import { StatsBar } from './components/StatsBar';
 import { QuickActions } from './components/QuickActions';
@@ -40,9 +41,21 @@ export function App() {
     <div class="app">
       <div class="row between">
         <h1>Tab Herder</h1>
+        <div class="row">
+        {!isSidePanel() && browser && (
+          <button
+            class="btn icon"
+            title="Open in side panel"
+            aria-label="Open in side panel"
+            onClick={() => void openSidePanel(browser.currentWindowId).then(() => window.close(), (e) => showToast(`Error: ${errorMessage(e)}`))}
+          >
+            <Icons.sidePanel />
+          </button>
+        )}
         <button class="btn icon" title="Settings" aria-label="Open settings" onClick={() => chrome.runtime.openOptionsPage()}>
           <Icons.gear />
         </button>
+        </div>
       </div>
 
       <SearchBox value={query} onChange={setQuery} />

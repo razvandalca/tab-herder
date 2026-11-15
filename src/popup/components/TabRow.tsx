@@ -2,12 +2,14 @@ import type { TabSnapshot } from '@/shared/types';
 import { hostname } from '@/core/url';
 import { Favicon } from '@/ui/Favicon';
 import { Icons } from '@/ui/icons';
+import { isSidePanel } from '@/ui/surface';
 
 export function TabRow({ tab, showWindow }: { tab: TabSnapshot; showWindow?: boolean }) {
   const jump = async () => {
     await chrome.tabs.update(tab.id, { active: true });
     await chrome.windows.update(tab.windowId, { focused: true });
-    window.close();
+    // The side panel stays open while you browse; only the popup dismisses itself.
+    if (!isSidePanel()) window.close();
   };
   const close = async (e: Event) => {
     e.stopPropagation();
