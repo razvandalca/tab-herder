@@ -6,6 +6,8 @@ import { Icons } from '@/ui/icons';
 import { ColorPicker } from '@/ui/ColorPicker';
 import type { Runner } from '../App';
 import { TabRow } from './TabRow';
+import { SnoozePicker } from './SnoozePicker';
+import { describeWake } from '@/core/snooze';
 
 interface Props {
   group: GroupSnapshot;
@@ -17,7 +19,7 @@ interface Props {
 export function GroupRow({ group, tabs, run, otherWindow }: Props) {
   const [open, setOpen] = useState(false);
   const [menu, setMenu] = useState(false);
-  const [editing, setEditing] = useState<null | 'rename' | 'save'>(null);
+  const [editing, setEditing] = useState<null | 'rename' | 'save' | 'snooze'>(null);
   const [text, setText] = useState('');
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -71,6 +73,7 @@ export function GroupRow({ group, tabs, run, otherWindow }: Props) {
               </div>
               <hr />
               <button role="menuitem" onClick={() => { setMenu(false); setText(group.title); setEditing('save'); }}>Save &amp; close…</button>
+              <button role="menuitem" onClick={() => { setMenu(false); setEditing('snooze'); }}>Snooze…</button>
               <button role="menuitem" onClick={() => act('Moved to new window', () => send({ type: 'moveGroupToNewWindow', groupId: group.id }))}>Move to new window</button>
               <button role="menuitem" onClick={() => act('Ungrouped', () => send({ type: 'ungroup', groupId: group.id }))}>Ungroup</button>
               <hr />
@@ -79,7 +82,19 @@ export function GroupRow({ group, tabs, run, otherWindow }: Props) {
           )}
         </div>
       </div>
-      {editing && (
+      {editing === 'snooze' && (
+        <div style="padding: 4px 8px">
+          <SnoozePicker
+            label={title}
+            onCancel={() => setEditing(null)}
+            onPick={(wakeAt) => {
+              setEditing(null);
+              void act(`Snoozed until ${describeWake(wakeAt, Date.now())}`, () => send({ type: 'snoozeGroup', groupId: group.id, wakeAt }));
+            }}
+          />
+        </div>
+      )}
+      {editing && editing !== 'snooze' && (
         <form class="inline-form" onSubmit={submit}>
           <input class="input sm grow" value={text} onInput={(e) => setText((e.target as HTMLInputElement).value)} placeholder={editing === 'rename' ? 'Group name' : 'Session name'} autoFocus />
           <button class="btn sm primary" type="submit">{editing === 'rename' ? 'Rename' : 'Save & close'}</button>

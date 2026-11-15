@@ -7,7 +7,7 @@ import { markPendingMoves } from './overrides';
 
 const toSaved = (t: TabSnapshot): SavedTab => ({ url: t.url, title: t.title, pinned: t.pinned, favIconUrl: t.favIconUrl });
 
-function savable(t: TabSnapshot): boolean {
+export function savable(t: Pick<TabSnapshot, 'url'>): boolean {
   // chrome:// and similar pages cannot be reopened by extensions; skip empty new tabs too.
   return /^(https?|ftp|file):/.test(t.url);
 }

@@ -9,7 +9,7 @@ import { saveGroupSession } from './sessions';
  * closed, but deletes it when the tabs are ungrouped first, so ungroup, then close.
  * If this would empty a window, a new tab is opened there first so the window survives.
  */
-async function closeTabsDiscardingGroups(tabs: Array<{ id: number; windowId: number }>): Promise<void> {
+export async function closeTabsDiscardingGroups(tabs: Array<{ id: number; windowId: number }>): Promise<void> {
   if (!tabs.length) return;
   const ids = tabs.map((t) => t.id);
   const closing = new Set(ids);

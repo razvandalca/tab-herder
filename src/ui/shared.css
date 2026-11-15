@@ -145,3 +145,9 @@ label.field > span, label.check > span.title { font-weight: 500; }
 .table { width: 100%; border-collapse: collapse; }
 .table td, .table th { padding: 6px 8px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
 .kbd { font-family: ui-monospace, monospace; background: var(--bg-2); border: 1px solid var(--border); border-radius: 4px; padding: 0 5px; font-size: 11px; }
+
+/* snooze */
+.snooze-picker { display: flex; flex-direction: column; gap: 6px; }
+.snooze-presets { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+.snooze-presets .btn { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; text-align: left; }
+.snooze-presets .btn > span { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

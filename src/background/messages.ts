@@ -9,6 +9,7 @@ import {
   setCollapsedAll, ungroup, ungroupAll,
 } from './groupActions';
 import { registerContentScript, unregisterContentScript } from './contentScripts';
+import { cancelSnoozed, snoozeGroup, snoozeTab, wakeSnoozed } from './snooze';
 import { patchLocal } from '@/shared/storage';
 import { withDefaults } from '@/shared/storage';
 import { DEFAULT_SETTINGS, newId } from '@/shared/defaults';
@@ -59,6 +60,14 @@ export async function handleRequest(req: Request): Promise<unknown> {
       return importData(req.data, req.rulesMode);
     case 'setContentScript':
       return req.enabled ? registerContentScript() : unregisterContentScript();
+    case 'snoozeTab':
+      return snoozeTab(req.tabId, req.wakeAt);
+    case 'snoozeGroup':
+      return snoozeGroup(req.groupId, req.wakeAt);
+    case 'wakeSnoozed':
+      return wakeSnoozed(req.id);
+    case 'cancelSnoozed':
+      return cancelSnoozed(req.id);
     default:
       throw new Error(`Unknown request: ${(req as { type: string }).type}`);
   }

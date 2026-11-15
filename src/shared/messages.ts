@@ -23,7 +23,11 @@ export type Request =
   | { type: 'restoreCleaned'; id: string }
   | { type: 'clearCleaned' }
   | { type: 'importData'; data: ExportFile; rulesMode: 'replace' | 'append' }
-  | { type: 'setContentScript'; enabled: boolean };
+  | { type: 'setContentScript'; enabled: boolean }
+  | { type: 'snoozeTab'; tabId?: number; wakeAt: number }
+  | { type: 'snoozeGroup'; groupId: number; wakeAt: number }
+  | { type: 'wakeSnoozed'; id: string }
+  | { type: 'cancelSnoozed'; id: string };
 
 export interface Stats {
   openTabs: number;

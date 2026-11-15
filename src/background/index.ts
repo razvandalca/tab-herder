@@ -11,12 +11,15 @@ import { installMessageRouter } from './messages';
 import { scheduleBadgeUpdate } from './badge';
 import { forgetGroup, forgetTab, handleGroupChange, touchGroup, touchTab } from './overrides';
 import { registerContentScript } from './contentScripts';
+import { initSnooze, wakeDue, ensureSnoozeAlarm } from './snooze';
+import { SNOOZE_ALARM } from '@/shared/snoozeStore';
 
 const log = (...a: unknown[]) => console.debug('[tab-herder]', ...a);
 
 async function startup(): Promise<void> {
   const settings = await getSettings();
   await ensureCleanupAlarm(settings);
+  await initSnooze().catch((e: unknown) => log('snooze init failed', e));
   scheduleBadgeUpdate();
   if (settings.cleanup.detectUnsavedForms || settings.contentGrouping) await registerContentScript();
 }
@@ -75,6 +78,8 @@ chrome.tabGroups.onUpdated.addListener((g) => {
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === CLEANUP_ALARM) {
     void runCleanup().then((r) => log('cleanup', r));
+  } else if (alarm.name === SNOOZE_ALARM) {
+    void wakeDue().then((n) => log('snooze woke', n)).finally(() => void ensureSnoozeAlarm());
   }
 });
 chrome.commands.onCommand.addListener((command) => void handleCommand(command));

@@ -10,6 +10,7 @@ import { QuickActions } from './components/QuickActions';
 import { GroupList } from './components/GroupList';
 import { TabRow } from './components/TabRow';
 import { RecentlyCleaned } from './components/RecentlyCleaned';
+import { Snoozed } from './components/Snoozed';
 
 export function App() {
   const [browser, refresh] = useBrowserState();
@@ -80,6 +81,7 @@ export function App() {
               </div>
             </details>
           )}
+          <Snoozed run={run} currentTab={browser?.tabs.find((t) => t.active && t.windowId === browser.currentWindowId)} />
           {local && <RecentlyCleaned entries={local.recentlyCleaned} run={run} />}
         </>
       )}
