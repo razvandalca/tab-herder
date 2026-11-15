@@ -33,6 +33,10 @@ jobs:
       - name: Typecheck
         run: bun run typecheck
 
+      # Formatting is not enforced yet (see #13); lint errors fail the build.
+      - name: Lint (Biome)
+        run: bunx biome ci --formatter-enabled=false .
+
       - name: Unit tests with coverage
         run: bun run coverage
 
@@ -72,3 +76,40 @@ jobs:
 
       - name: Build extension
         run: bun run build
+
+  e2e:
+    name: E2E (Playwright, Chromium)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      OUT: ${{ github.workspace }}/e2e-out
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Install Chromium
+        run: bunx playwright install --with-deps chromium
+
+      - name: Build extension
+        run: bun run build
+
+      # The script launches Chromium's new headless mode, which loads extensions without a display.
+      - name: Run e2e suite
+        run: |
+          mkdir -p "$OUT"
+          set -o pipefail
+          bun run e2e 2>&1 | tee "$OUT/e2e.log"
+
+      - name: Upload e2e screenshots and log
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: e2e-output
+          path: e2e-out/
+          retention-days: 14
