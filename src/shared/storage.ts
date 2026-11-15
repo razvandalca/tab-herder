@@ -8,11 +8,11 @@ import { CHUNK_PREFIX, decodeProfiles, encodeSync } from '@/core/profiles';
  *                             profiles: index, "rules:<id>:<n>": chunks of inactive profiles }
  *     (rules live under their own keys so long rule lists do not hit the 8 KB per-item quota;
  *      see src/core/profiles.ts)
- *   chrome.storage.local:   { sessions, recentlyCleaned, stats }
+ *   chrome.storage.local:   { sessions, autosaves, recentlyCleaned, stats, insights }
  *   chrome.storage.session: { managedGroups, overrides, pendingMoves, lastActive, groupLastActive }
  */
 
-export const DEFAULT_LOCAL: LocalState = { sessions: [], recentlyCleaned: [], stats: { cleanedByDay: {} } };
+export const DEFAULT_LOCAL: LocalState = { sessions: [], autosaves: [], recentlyCleaned: [], stats: { cleanedByDay: {}, discardedByDay: {} } };
 export const DEFAULT_SESSION: SessionState = {
   managedGroups: {},
   overrides: {},

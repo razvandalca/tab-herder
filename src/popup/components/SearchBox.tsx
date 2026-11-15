@@ -1,7 +1,15 @@
 import { useEffect, useRef } from 'preact/hooks';
 import { Icons } from '@/ui/icons';
 
-export function SearchBox({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+interface Props {
+  value: string;
+  onChange: (v: string) => void;
+  /** Extra key handling (used by the `>` command palette). */
+  onKeyDown?: (e: KeyboardEvent) => void;
+}
+
+export function SearchBox({ value, onChange, onKeyDown }: Props) {
+  const palette = value.trimStart().startsWith('>');
   const ref = useRef<HTMLInputElement>(null);
   useEffect(() => {
     ref.current?.focus();
@@ -14,12 +22,17 @@ export function SearchBox({ value, onChange }: { value: string; onChange: (v: st
         class="input"
         style="padding-left: 28px"
         type="search"
-        placeholder="Search open tabs…"
-        aria-label="Search open tabs"
+        placeholder="Search open tabs… (type > for commands)"
+        aria-label={palette ? 'Run a command' : 'Search open tabs'}
         value={value}
         onInput={(e) => onChange((e.target as HTMLInputElement).value)}
         onKeyDown={(e) => {
-          if (e.key === 'Escape') onChange('');
+          if (e.key === 'Escape' && value) {
+            e.preventDefault();
+            onChange('');
+            return;
+          }
+          onKeyDown?.(e);
         }}
       />
     </div>

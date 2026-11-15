@@ -1,4 +1,5 @@
 import type { ExportFile, GroupColor } from './types';
+import type { GroupSortKey, TabSortKey } from '@/core/sorting';
 
 export type Request =
   | { type: 'groupNow'; windowId?: number }
@@ -10,6 +11,9 @@ export type Request =
   | { type: 'restoreSession'; id: string }
   | { type: 'deleteSession'; id: string }
   | { type: 'renameSession'; id: string; name: string }
+  | { type: 'autosaveNow' }
+  | { type: 'restoreAutosave'; id: string }
+  | { type: 'deleteAutosave'; id: string }
   | { type: 'closeGroup'; groupId: number }
   | { type: 'saveAndCloseGroup'; groupId: number; name?: string }
   | { type: 'ungroup'; groupId: number }
@@ -23,7 +27,19 @@ export type Request =
   | { type: 'restoreCleaned'; id: string }
   | { type: 'clearCleaned' }
   | { type: 'importData'; data: ExportFile; rulesMode: 'replace' | 'append' }
-  | { type: 'setContentScript'; enabled: boolean };
+  | { type: 'switchProfile'; id: string }
+  | { type: 'setContentScript'; enabled: boolean }
+  | { type: 'sortGroupTabs'; groupId: number; key: TabSortKey }
+  | { type: 'sortGroups'; windowId: number; key: GroupSortKey }
+  | { type: 'undoClose'; ids: string[] }
+  | { type: 'clearInsights' }
+  | { type: 'setInsightsPaused'; paused: boolean };
+
+/** Result of closeGroup / closeAllGroups: how many were closed, and auto-saved session ids for Undo. */
+export interface CloseResult {
+  closed: number;
+  undo: string[];
+}
 
 export interface Stats {
   openTabs: number;

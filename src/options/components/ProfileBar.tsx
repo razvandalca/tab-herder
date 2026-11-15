@@ -58,7 +58,7 @@ export function ProfileBar({ settings, save, notify, selectedId, select }: Props
   };
 
   return (
-    <div class="card" aria-label="Rule profiles">
+    <section class="card" aria-label="Rule profiles">
       <div class="row between" style="flex-wrap: wrap; gap: 8px">
         <div>
           <h2>Profiles</h2>
@@ -79,11 +79,11 @@ export function ProfileBar({ settings, save, notify, selectedId, select }: Props
             </option>
           ))}
         </select>
-        {isActive ? <span class="badge">Active</span> : <button class="btn sm primary" onClick={() => void activate()}>Make active</button>}
-        <button class="btn sm" onClick={() => startNaming('new')}>New</button>
-        <button class="btn sm" onClick={() => startNaming('rename')}>Rename</button>
-        <button class="btn sm" onClick={() => void duplicate()}>Duplicate</button>
-        <button class="btn sm danger" disabled={settings.profiles.length <= 1} title={settings.profiles.length <= 1 ? 'The last profile cannot be deleted' : undefined} onClick={() => void remove()}>Delete</button>
+        {isActive ? <span class="badge">Active</span> : <button type="button" class="btn sm primary" onClick={() => void activate()}>Make active</button>}
+        <button type="button" class="btn sm" onClick={() => startNaming('new')}>New</button>
+        <button type="button" class="btn sm" onClick={() => startNaming('rename')}>Rename</button>
+        <button type="button" class="btn sm" onClick={() => void duplicate()}>Duplicate</button>
+        <button type="button" class="btn sm danger" disabled={settings.profiles.length <= 1} title={settings.profiles.length <= 1 ? 'The last profile cannot be deleted' : undefined} onClick={() => void remove()}>Delete</button>
       </div>
       {naming && (
         <form class="inline-form" style="padding: 0" onSubmit={(e) => { e.preventDefault(); void submit(); }}>
@@ -96,9 +96,9 @@ export function ProfileBar({ settings, save, notify, selectedId, select }: Props
             autoFocus
           />
           <button class="btn sm primary" type="submit">{naming === 'new' ? 'Create' : 'Rename'}</button>
-          <button class="btn sm" type="button" onClick={() => setNaming(null)}>Cancel</button>
+          <button type="button" class="btn sm" onClick={() => setNaming(null)}>Cancel</button>
         </form>
       )}
-    </div>
+    </section>
   );
 }

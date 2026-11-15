@@ -122,7 +122,9 @@ export function encodeSync(settings: Settings, existingKeys: string[] = []): { i
       continue;
     }
     const chunks = chunkRules(p.rules);
-    chunks.forEach((c, n) => (items[chunkKey(p.id, n)] = c));
+    chunks.forEach((c, n) => {
+      items[chunkKey(p.id, n)] = c;
+    });
     list.push({ id: p.id, name: p.name, chunks: chunks.length });
   }
   items.profiles = { activeId: activeProfileId, list } satisfies ProfileIndex;
