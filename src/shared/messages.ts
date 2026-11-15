@@ -1,4 +1,5 @@
 import type { ExportFile, GroupColor } from './types';
+import type { GroupSortKey, TabSortKey } from '@/core/sorting';
 
 export type Request =
   | { type: 'groupNow'; windowId?: number }
@@ -23,7 +24,9 @@ export type Request =
   | { type: 'restoreCleaned'; id: string }
   | { type: 'clearCleaned' }
   | { type: 'importData'; data: ExportFile; rulesMode: 'replace' | 'append' }
-  | { type: 'setContentScript'; enabled: boolean };
+  | { type: 'setContentScript'; enabled: boolean }
+  | { type: 'sortGroupTabs'; groupId: number; key: TabSortKey }
+  | { type: 'sortGroups'; windowId: number; key: GroupSortKey };
 
 export interface Stats {
   openTabs: number;

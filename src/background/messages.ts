@@ -9,6 +9,7 @@ import {
   setCollapsedAll, ungroup, ungroupAll,
 } from './groupActions';
 import { registerContentScript, unregisterContentScript } from './contentScripts';
+import { sortGroupsInWindow, sortTabsInGroup } from './sorting';
 import { patchLocal } from '@/shared/storage';
 import { withDefaults } from '@/shared/storage';
 import { DEFAULT_SETTINGS, newId } from '@/shared/defaults';
@@ -59,6 +60,10 @@ export async function handleRequest(req: Request): Promise<unknown> {
       return importData(req.data, req.rulesMode);
     case 'setContentScript':
       return req.enabled ? registerContentScript() : unregisterContentScript();
+    case 'sortGroupTabs':
+      return sortTabsInGroup(req.groupId, req.key);
+    case 'sortGroups':
+      return sortGroupsInWindow(req.windowId, req.key);
     default:
       throw new Error(`Unknown request: ${(req as { type: string }).type}`);
   }
