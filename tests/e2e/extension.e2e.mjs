@@ -239,6 +239,39 @@ if (groupsBeforeUi > 0) {
   await sleep(1500);
   check((await groups()).filter((g) => g.windowId === popupWin).length === groupsBeforeUi, 'popup Undo restored the groups');
 } else check(false, `expected groups in the popup window ${popupWin} (win ${win.id}): ${JSON.stringify((await groups()).map((g) => [g.title, g.windowId]))}`);
+
+// 12. Command palette: `>` switches to commands; keyboard runs them; close-all needs a second Enter
+// (the popup tab was moved into `win` above)
+await send({ type: 'collapseAll', windowId: win.id, collapsed: false });
+await sleep(200);
+const search = popup.locator('input[type=search]');
+await search.fill('>');
+await sleep(150);
+check(await popup.locator('[role=listbox][aria-label=Commands]').isVisible(), 'typing > shows the command palette');
+await search.fill('> save session Palette');
+await sleep(150);
+check((await popup.locator('[role=option][aria-selected=true]').textContent())?.includes('Save session “Palette”'), 'save session parses the name argument');
+await search.press('Enter');
+await sleep(500);
+local = await api(() => chrome.storage.local.get(null));
+check(local.sessions.some((s) => s.name === 'Palette' && s.kind === 'window'), 'palette saved a named session');
+check((await search.inputValue()) === '', 'running a command returns to tab search');
+await search.fill('> collapse all');
+await sleep(150);
+await search.press('Enter');
+await sleep(400);
+check((await groups()).filter((g) => g.windowId === win.id).every((g) => g.collapsed), 'palette collapse all');
+const groupsInPopupWin = async () => (await groups()).filter((g) => g.windowId === win.id).length;
+const beforePaletteClose = await groupsInPopupWin();
+await search.fill('> close all groups');
+await sleep(150);
+await search.press('Enter');
+await sleep(300);
+check((await popup.locator('[role=option][aria-selected=true]').textContent())?.includes('Press Enter again'), 'close all groups asks for confirmation');
+check((await groupsInPopupWin()) === beforePaletteClose, 'first Enter does not close groups');
+await search.press('Escape');
+await sleep(100);
+check((await search.inputValue()) === '' && !(await popup.locator('[role=listbox][aria-label=Commands]').count()), 'Esc leaves the palette');
 await ext.goto(`chrome-extension://${extId}/src/options/index.html#rules`);
 await sleep(500);
 await ext.screenshot({ path: join(OUT, 'options-rules.png'), fullPage: true });

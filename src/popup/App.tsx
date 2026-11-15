@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'preact/hooks';
 import { fuzzySearch } from '@/core/fuzzy';
+import { paletteQuery } from '@/core/palette';
 import { send, type CloseResult } from '@/shared/messages';
 import { NO_GROUP } from '@/shared/types';
 import { errorMessage, useBrowserState, useLocal, useStats, useToast } from '@/ui/hooks';
@@ -10,6 +11,7 @@ import { QuickActions } from './components/QuickActions';
 import { GroupList } from './components/GroupList';
 import { TabRow } from './components/TabRow';
 import { RecentlyCleaned } from './components/RecentlyCleaned';
+import { CommandList, usePalette } from './components/CommandPalette';
 
 export function App() {
   const [browser, refresh] = useBrowserState();
@@ -20,7 +22,7 @@ export function App() {
   const stats = useStats([tick, browser?.tabs.length, browser?.groups.length, local?.stats]);
 
   const results = useMemo(() => {
-    if (!browser || !query.trim()) return [];
+    if (!browser || !query.trim() || paletteQuery(query) !== null) return [];
     const own = `chrome-extension://${chrome.runtime.id}/`;
     return fuzzySearch(query, browser.tabs.filter((t) => !t.url.startsWith(own)), 40);
   }, [browser, query]);
@@ -42,6 +44,14 @@ export function App() {
     }
   }
 
+  const palette = usePalette({
+    query: paletteQuery(query),
+    groups: browser?.groups ?? [],
+    currentWindowId: browser?.currentWindowId ?? -1,
+    run,
+    exit: () => setQuery(''),
+  });
+
   return (
     <div class="app">
       <div class="row between">
@@ -51,9 +61,11 @@ export function App() {
         </button>
       </div>
 
-      <SearchBox value={query} onChange={setQuery} />
+      <SearchBox value={query} onChange={setQuery} onKeyDown={palette.onKeyDown} />
 
-      {query.trim() ? (
+      {palette.active ? (
+        <CommandList {...palette} />
+      ) : query.trim() ? (
         <div class="list" role="list" aria-label="Search results">
           {results.length === 0 && <div class="muted" style="padding: 8px">No matching tabs</div>}
           {results.map((t) => (
