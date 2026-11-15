@@ -145,3 +145,20 @@ label.field > span, label.check > span.title { font-weight: 500; }
 .table { width: 100%; border-collapse: collapse; }
 .table td, .table th { padding: 6px 8px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
 .kbd { font-family: ui-monospace, monospace; background: var(--bg-2); border: 1px solid var(--border); border-radius: 4px; padding: 0 5px; font-size: 11px; }
+
+/* insights charts */
+:root { --chart-1: #2563eb; --chart-2: #d97706; }
+@media (prefers-color-scheme: dark) { :root { --chart-1: #3b82f6; --chart-2: #d97706; } }
+.chart { margin: 0; display: flex; flex-direction: column; gap: 4px; }
+.chart svg, svg.hbars { width: 100%; height: auto; display: block; overflow: visible; }
+.chart .axis line { stroke: var(--bg-3); stroke-width: 1; }
+.chart .axis text, svg.hbars text { fill: var(--fg-2); font-size: 10px; }
+svg.hbars text.label { fill: var(--fg); }
+.chart .band { fill: var(--chart-1); opacity: 0.18; }
+.chart .line { fill: none; stroke: var(--chart-1); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.chart .hit rect:first-child, .chart .hit .ghost { fill: transparent; }
+.chart .hit circle { fill: var(--chart-1); stroke: var(--bg); stroke-width: 2; opacity: 0; }
+.chart .hit:hover circle, .chart .hit circle.solo { opacity: 1; }
+.chart .hit:hover .ghost { fill: var(--bg-2); }
+.legend { display: inline-flex; align-items: center; gap: 4px; }
+.legend i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }

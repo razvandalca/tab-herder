@@ -1,7 +1,7 @@
 import type { Settings } from './types';
 
 export const RECENTLY_CLEANED_MAX = 100;
-export const STATS_RETENTION_DAYS = 30;
+export const STATS_RETENTION_DAYS = 90;
 export const GROUPING_DEBOUNCE_MS = 750;
 export const CLEANUP_ALARM = 'tab-herder:cleanup';
 

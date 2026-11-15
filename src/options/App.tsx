@@ -6,12 +6,14 @@ import { CleanupSettings } from './components/CleanupSettings';
 import { SessionsPanel } from './components/SessionsPanel';
 import { ImportExport } from './components/ImportExport';
 import { ShortcutsPanel } from './components/ShortcutsPanel';
+import { InsightsPanel } from './components/InsightsPanel';
 
 const TABS = [
   ['grouping', 'Grouping'],
   ['rules', 'Rules'],
   ['cleanup', 'Cleanup'],
   ['sessions', 'Sessions'],
+  ['insights', 'Insights'],
   ['data', 'Import / Export'],
   ['shortcuts', 'Shortcuts'],
 ] as const;
@@ -57,6 +59,7 @@ export function App() {
       {tab === 'rules' && <RulesEditor settings={settings} save={save} notify={notify} />}
       {tab === 'cleanup' && <CleanupSettings settings={settings} save={save} local={local} notify={notify} fail={fail} />}
       {tab === 'sessions' && <SessionsPanel local={local} notify={notify} fail={fail} />}
+      {tab === 'insights' && <InsightsPanel local={local} notify={notify} fail={fail} />}
       {tab === 'data' && <ImportExport settings={settings} local={local} notify={notify} fail={fail} />}
       {tab === 'shortcuts' && <ShortcutsPanel />}
       {toast && <div class="toast" role="status">{toast}</div>}

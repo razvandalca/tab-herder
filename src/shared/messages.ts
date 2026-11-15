@@ -23,7 +23,9 @@ export type Request =
   | { type: 'restoreCleaned'; id: string }
   | { type: 'clearCleaned' }
   | { type: 'importData'; data: ExportFile; rulesMode: 'replace' | 'append' }
-  | { type: 'setContentScript'; enabled: boolean };
+  | { type: 'setContentScript'; enabled: boolean }
+  | { type: 'clearInsights' }
+  | { type: 'setInsightsPaused'; paused: boolean };
 
 export interface Stats {
   openTabs: number;
