@@ -1,7 +1,7 @@
 version: 2
 updates:
-  # npm ecosystem also covers bun projects (reads package.json / bun.lock)
-  - package-ecosystem: npm
+  # Updates package.json and bun.lock together
+  - package-ecosystem: bun
     directory: /
     schedule:
       interval: weekly
