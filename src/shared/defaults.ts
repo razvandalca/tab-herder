@@ -6,6 +6,7 @@ export const CLOSED_SESSIONS_MAX = 20;
 export const STATS_RETENTION_DAYS = 30;
 export const GROUPING_DEBOUNCE_MS = 750;
 export const CLEANUP_ALARM = 'tab-herder:cleanup';
+export const AUTOSAVE_ALARM = 'tab-herder:autosave';
 
 export const DEFAULT_SETTINGS: Settings = {
   mode: 'manual',
@@ -24,6 +25,8 @@ export const DEFAULT_SETTINGS: Settings = {
     allowlist: [],
     detectUnsavedForms: false,
   },
+  // Off by default (opt-in, as the issue asks): it writes browsing history to local storage.
+  autosave: { enabled: false, intervalMinutes: 10, keep: 5 },
   rules: [],
 };
 

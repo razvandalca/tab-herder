@@ -42,7 +42,7 @@ All data is kept in Chrome's extension storage (`chrome.storage`) on your device
 | Storage area | What is in it | How long |
 |---|---|---|
 | `chrome.storage.sync` | Your settings and grouping rules (group names, colours, match patterns, cleanup options, allowlisted domains). | Until you change them or uninstall. |
-| `chrome.storage.local` | Saved sessions (tab URLs, titles, favicon URLs, group names and colours), the "Recently cleaned" list (the last 100 tabs the extension closed, so you can restore them), and a per-day count of tabs cleaned. | Until you delete them or uninstall. |
+| `chrome.storage.local` | Saved sessions (tab URLs, titles, favicon URLs, group names and colours), autosave snapshots if you turn them on (tab URLs, titles, pinned state and group names/colours of every non-incognito window; no favicons; only the last few you choose to keep, 5 by default), the "Recently cleaned" list (the last 100 tabs the extension closed, so you can restore them), and a per-day count of tabs cleaned. | Until you delete them or uninstall. |
 | `chrome.storage.session` | Short-lived bookkeeping: which groups the extension created, tabs you moved by hand, and when tabs and groups were last active. | Cleared when the browser closes. |
 
 `chrome.storage.sync` is synchronised between your own Chrome profiles **by Chrome Sync**, only if you

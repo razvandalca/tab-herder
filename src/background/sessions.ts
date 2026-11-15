@@ -1,28 +1,14 @@
 import { CLOSED_SESSIONS_MAX, newId } from '@/shared/defaults';
 import { getLocal, patchLocal } from '@/shared/storage';
-import type { GroupSnapshot, SavedGroup, SavedTab, Session, TabSnapshot } from '@/shared/types';
-import { NO_GROUP } from '@/shared/types';
+import type { GroupSnapshot, SavedGroup, SavedTab, Session, TabSnapshot, WindowSnapshot } from '@/shared/types';
 import { addClosedSessions, buildClosedSessions, isSavable as savable, toSavedTab as toSaved } from '@/core/sessions';
+import { buildWindowSnapshot } from '@/core/autosave';
 import { allGroups, allTabs, quietly, tuple } from './tabs';
 import { markPendingMoves } from './overrides';
 
-export async function snapshotWindow(windowId: number): Promise<Pick<Session, 'groups' | 'ungrouped'>> {
+export async function snapshotWindow(windowId: number): Promise<WindowSnapshot> {
   const [tabs, groups] = await Promise.all([allTabs({ windowId }), allGroups({ windowId })]);
-  const byGroup = new Map<number, SavedTab[]>();
-  const ungrouped: SavedTab[] = [];
-  for (const t of tabs.sort((a, b) => a.index - b.index)) {
-    if (!savable(t)) continue;
-    if (t.groupId === NO_GROUP) ungrouped.push(toSaved(t));
-    else {
-      const list = byGroup.get(t.groupId) ?? [];
-      list.push(toSaved(t));
-      byGroup.set(t.groupId, list);
-    }
-  }
-  const savedGroups: SavedGroup[] = groups
-    .filter((g) => byGroup.has(g.id))
-    .map((g) => ({ title: g.title, color: g.color, collapsed: g.collapsed, tabs: byGroup.get(g.id)! }));
-  return { groups: savedGroups, ungrouped };
+  return buildWindowSnapshot(tabs, groups);
 }
 
 export async function snapshotGroup(groupId: number): Promise<SavedGroup> {

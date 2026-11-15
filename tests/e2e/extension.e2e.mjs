@@ -150,6 +150,43 @@ check(newGroups.some((g) => g.title === 'Dev' && g.color === 'blue') && newGroup
 await api((id) => chrome.windows.remove(id), newWin.id);
 await sleep(500);
 
+// 7b. Autosave: snapshot all windows, skip when unchanged, prune, restore, delete
+await api(() => chrome.storage.sync.set({ settings: { mode: 'manual', autosave: { enabled: true, intervalMinutes: 10, keep: 2 } } }));
+await sleep(300);
+check(!!(await api(() => chrome.alarms.get('tab-herder:autosave'))), 'autosave alarm scheduled when enabled');
+r = await send({ type: 'autosaveNow' });
+check(r.ok && r.result && r.result.windows.length >= 1, 'autosaveNow created a snapshot');
+const firstAuto = r.result;
+r = await send({ type: 'autosaveNow' });
+check(r.ok && r.result === null, 'unchanged windows are not saved again');
+const autosaveTab = await open('https://example.org/autosave');
+await sleep(300);
+r = await send({ type: 'autosaveNow' });
+check(r.ok && r.result, 'a new tab triggers a new snapshot');
+await autosaveTab.close();
+await sleep(300);
+r = await send({ type: 'autosaveNow' });
+local = await api(() => chrome.storage.local.get(null));
+check(local.autosaves.length === 2 && !local.autosaves.some((a) => a.id === firstAuto.id), `pruned to keep=2 (${local.autosaves.length})`);
+check(!local.sessions.some((s) => local.autosaves.some((a) => a.id === s.id)) && !JSON.stringify(local.autosaves).includes('favIconUrl'), 'autosaves kept apart from sessions, no favicons');
+const winsBeforeList = await api(() => chrome.windows.getAll());
+const winsBefore = winsBeforeList.length;
+r = await send({ type: 'restoreAutosave', id: local.autosaves[0].id });
+await sleep(1500);
+const winsAfter = await api(() => chrome.windows.getAll());
+check(r.ok && winsAfter.length === winsBefore + local.autosaves[0].windows.length, 'restoring an autosave opens its windows');
+const restoredWins = winsAfter.filter((w) => !winsBeforeList.some((b) => b.id === w.id));
+const restoredGroups = (await groups()).filter((g) => restoredWins.some((w) => w.id === g.windowId));
+check(restoredGroups.some((g) => g.title === 'Dev' && g.color === 'blue'), 'autosave restore keeps group names/colours');
+for (const w of restoredWins) await api((id) => chrome.windows.remove(id), w.id);
+await sleep(500);
+r = await send({ type: 'deleteAutosave', id: local.autosaves[0].id });
+local = await api(() => chrome.storage.local.get(null));
+check(r.ok && local.autosaves.length === 1, 'deleteAutosave removes it');
+await api(() => chrome.storage.sync.set({ settings: { mode: 'manual', autosave: { enabled: false, intervalMinutes: 10, keep: 2 } } }));
+await sleep(300);
+check(!(await api(() => chrome.alarms.get('tab-herder:autosave'))), 'autosave alarm cleared when disabled');
+
 // 8. Group actions
 const video = (await groups()).find((g) => g.title === 'Video' && g.windowId === win.id);
 r = await send({ type: 'renameGroup', groupId: video.id, title: 'Vids' });
@@ -300,6 +337,10 @@ await ext.screenshot({ path: join(OUT, 'options-rules.png'), fullPage: true });
 await ext.goto(`chrome-extension://${extId}/src/options/index.html#cleanup`);
 await sleep(500);
 await ext.screenshot({ path: join(OUT, 'options-cleanup.png'), fullPage: true });
+await ext.goto(`chrome-extension://${extId}/src/options/index.html#sessions`);
+await sleep(500);
+check((await ext.locator('[data-testid=autosaves]').textContent()).includes('Autosave – '), 'Sessions panel lists autosaves');
+await ext.screenshot({ path: join(OUT, 'options-sessions.png'), fullPage: true });
 check(errors.length === 0, `no page errors in popup / side panel (${errors.join('; ')})`);
 
 console.log(failures === 0 ? '\nALL CHECKS PASSED' : `\n${failures} CHECK(S) FAILED`);

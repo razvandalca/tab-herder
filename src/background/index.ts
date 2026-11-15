@@ -4,7 +4,8 @@ import { getSettings, onSettingsChanged } from '@/shared/storage';
 import { NO_GROUP } from '@/shared/types';
 import { scheduleRegroup } from './grouping';
 import { ensureCleanupAlarm, runCleanup } from './cleanup';
-import { CLEANUP_ALARM } from '@/shared/defaults';
+import { AUTOSAVE_ALARM, CLEANUP_ALARM } from '@/shared/defaults';
+import { ensureAutosaveAlarm, pruneStoredAutosaves, runAutosave } from './autosave';
 import { installContextMenus, handleContextMenu } from './contextMenus';
 import { handleCommand } from './commands';
 import { installMessageRouter } from './messages';
@@ -17,6 +18,7 @@ const log = (...a: unknown[]) => console.debug('[tab-herder]', ...a);
 async function startup(): Promise<void> {
   const settings = await getSettings();
   await ensureCleanupAlarm(settings);
+  await ensureAutosaveAlarm(settings);
   scheduleBadgeUpdate();
   if (settings.cleanup.detectUnsavedForms || settings.contentGrouping) await registerContentScript();
 }
@@ -76,6 +78,9 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === CLEANUP_ALARM) {
     void runCleanup().then((r) => log('cleanup', r));
   }
+  if (alarm.name === AUTOSAVE_ALARM) {
+    void runAutosave().then((a) => log('autosave', a ? a.id : 'unchanged'));
+  }
 });
 chrome.commands.onCommand.addListener((command, tab) => void handleCommand(command, tab));
 chrome.contextMenus.onClicked.addListener((info, tab) => void handleContextMenu(info, tab));
@@ -83,6 +88,8 @@ installMessageRouter();
 
 onSettingsChanged((settings) => {
   void ensureCleanupAlarm(settings);
+  void ensureAutosaveAlarm(settings);
+  void pruneStoredAutosaves(settings);
   scheduleBadgeUpdate();
 });
 

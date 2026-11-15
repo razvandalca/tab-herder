@@ -5,11 +5,11 @@ import { DEFAULT_SETTINGS } from './defaults';
  * Layout
  *   chrome.storage.sync:    { settings: Settings-without-rules, rules: Rule[] }
  *     (rules live under their own key so a long rule list does not hit the 8 KB per-item quota)
- *   chrome.storage.local:   { sessions, recentlyCleaned, stats }
+ *   chrome.storage.local:   { sessions, autosaves, recentlyCleaned, stats }
  *   chrome.storage.session: { managedGroups, overrides, pendingMoves, lastActive, groupLastActive }
  */
 
-export const DEFAULT_LOCAL: LocalState = { sessions: [], recentlyCleaned: [], stats: { cleanedByDay: {} } };
+export const DEFAULT_LOCAL: LocalState = { sessions: [], autosaves: [], recentlyCleaned: [], stats: { cleanedByDay: {} } };
 export const DEFAULT_SESSION: SessionState = {
   managedGroups: {},
   overrides: {},

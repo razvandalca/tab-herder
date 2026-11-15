@@ -56,7 +56,7 @@ export function App() {
       {tab === 'grouping' && <GroupingSettings settings={settings} save={save} notify={notify} fail={fail} />}
       {tab === 'rules' && <RulesEditor settings={settings} save={save} notify={notify} />}
       {tab === 'cleanup' && <CleanupSettings settings={settings} save={save} local={local} notify={notify} fail={fail} />}
-      {tab === 'sessions' && <SessionsPanel local={local} notify={notify} fail={fail} />}
+      {tab === 'sessions' && <SessionsPanel settings={settings} save={save} local={local} notify={notify} fail={fail} />}
       {tab === 'data' && <ImportExport settings={settings} local={local} notify={notify} fail={fail} />}
       {tab === 'shortcuts' && <ShortcutsPanel />}
       {toast && <div class="toast" role="status">{toast}</div>}

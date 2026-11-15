@@ -43,6 +43,7 @@ SAFE CLEANUP
 SESSIONS
 • Save a window or a single group under a name and restore it later with the original group
   names and colours.
+• Optional autosave: snapshot all windows every few minutes and restore after a crash.
 • Export and import sessions and rules as JSON.
 
 POPUP AND SHORTCUTS

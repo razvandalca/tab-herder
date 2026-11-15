@@ -11,6 +11,9 @@ export type Request =
   | { type: 'restoreSession'; id: string }
   | { type: 'deleteSession'; id: string }
   | { type: 'renameSession'; id: string; name: string }
+  | { type: 'autosaveNow' }
+  | { type: 'restoreAutosave'; id: string }
+  | { type: 'deleteAutosave'; id: string }
   | { type: 'closeGroup'; groupId: number }
   | { type: 'saveAndCloseGroup'; groupId: number; name?: string }
   | { type: 'ungroup'; groupId: number }
