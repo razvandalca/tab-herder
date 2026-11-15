@@ -93,6 +93,10 @@ Fuzzy search across all open tabs (title and URL, type to filter, click to jump)
 window with tab counts, quick actions (Group now · Clean up · Close duplicates · Save session),
 stats (open tabs · groups · tabs cleaned this week) and the recently cleaned list.
 
+Type `>` in the search box for the command palette: `> group now`, `> close duplicates`,
+`> collapse all`, `> close group Dev`, `> move Dev to new window`, `> save session Research`.
+Arrows + Enter run a command, Esc goes back to tab search; “Close all groups” asks for a second Enter.
+
 ### Keyboard shortcuts
 | Action | Default |
 |---|---|
@@ -151,6 +155,7 @@ src/core/             pure logic, no chrome.* calls, fully unit-tested
   grouping.ts         grouping plan for one window
   cleanup.ts          cleanup plan (close / discard)
   fuzzy.ts            popup search
+  palette.ts          popup command palette (commands, arguments, matching)
   classify.ts         content heuristic
 src/background/       MV3 service worker (stateless; reads state from storage)
 src/popup/            popup UI (Preact)

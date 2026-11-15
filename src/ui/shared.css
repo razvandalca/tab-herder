@@ -86,6 +86,7 @@ label.field > span, label.check > span.title { font-weight: 500; }
 .item { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: var(--radius); }
 .item:hover { background: var(--bg-2); }
 .item.clickable { cursor: pointer; }
+.item.selected { background: var(--bg-3); }
 .favicon { width: 16px; height: 16px; flex: none; border-radius: 3px; background: var(--bg-3); }
 .badge { background: var(--bg-3); color: var(--fg-2); border-radius: 999px; padding: 0 7px; font-size: 11px; line-height: 18px; }
 
