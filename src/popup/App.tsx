@@ -92,7 +92,7 @@ export function App() {
       {toast && (
         <div class="toast" role="status">
           {toast}
-          {toastAction && <button class="toast-action" onClick={toastAction.onClick}>{toastAction.label}</button>}
+          {toastAction && <button type="button" class="toast-action" onClick={toastAction.onClick}>{toastAction.label}</button>}
         </div>
       )}
     </div>

@@ -31,7 +31,7 @@ export function RecentlyCleaned({ entries, closed = [], run }: { entries: Cleane
                 closed {s.groups.length === 1 ? 'group' : `${s.groups.length} groups`} · {s.groups.reduce((n, g) => n + g.tabs.length, 0)} tabs
               </div>
             </div>
-            <button class="btn sm" onClick={() => run('Groups restored', () => send({ type: 'undoClose', ids: [s.id] }))}><Icons.restore /> Restore</button>
+            <button type="button" class="btn sm" onClick={() => run('Groups restored', () => send({ type: 'undoClose', ids: [s.id] }))}><Icons.restore /> Restore</button>
           </div>
         ))}
         {shown.map((e) => (
