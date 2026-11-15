@@ -1,4 +1,5 @@
 import type { ExportFile, GroupColor } from './types';
+import type { GroupSortKey, TabSortKey } from '@/core/sorting';
 
 export type Request =
   | { type: 'groupNow'; windowId?: number }
@@ -24,6 +25,8 @@ export type Request =
   | { type: 'clearCleaned' }
   | { type: 'importData'; data: ExportFile; rulesMode: 'replace' | 'append' }
   | { type: 'setContentScript'; enabled: boolean }
+  | { type: 'sortGroupTabs'; groupId: number; key: TabSortKey }
+  | { type: 'sortGroups'; windowId: number; key: GroupSortKey }
   | { type: 'undoClose'; ids: string[] };
 
 /** Result of closeGroup / closeAllGroups: how many were closed, and auto-saved session ids for Undo. */

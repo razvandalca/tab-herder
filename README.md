@@ -96,6 +96,11 @@ Fuzzy search across all open tabs (title and URL, type to filter, click to jump)
 window with tab counts, quick actions (Group now · Clean up · Close duplicates · Save session),
 stats (open tabs · groups · tabs cleaned this week) and the recently cleaned list.
 
+### Sorting
+Sort the tabs in a group by title, domain or last used (group menu `⋮` → Sort tabs), and the groups
+in a window by name or size (Sort groups row in the popup). Both are also in the right-click menu.
+Ungrouped tabs keep their place between groups, and sorting never counts as a manual move.
+
 ### Keyboard shortcuts
 | Action | Default |
 |---|---|

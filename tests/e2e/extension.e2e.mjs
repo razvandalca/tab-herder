@@ -78,6 +78,32 @@ check(dev && dev.color === 'blue' && (await tabsOf('Dev')).length === 3, `Dev ru
 check(!gs.find((g) => g.title === 'github.com'), 'old github.com managed group gone');
 check(gs.find((g) => g.title === 'Video')?.color === 'red', 'Video glob rule group is red');
 
+// 2b. Sorting tabs within a group and groups within a window
+const devTabs = async () => (await tabsOf('Dev')).sort((a, b) => a.index - b.index);
+const byTitle = (await devTabs()).map((t) => t.title).sort((a, b) => a.localeCompare(b));
+r = await send({ type: 'sortGroupTabs', groupId: dev.id, key: 'title' });
+await sleep(300);
+const sortedDev = await devTabs();
+check(r.ok && JSON.stringify(sortedDev.map((t) => t.title)) === JSON.stringify(byTitle), `sort by title reorders Dev tabs: ${sortedDev.map((t) => t.title)}`);
+await api((id) => chrome.tabs.move(id, { index: -1 }), (await tabs()).find((t) => t.url.startsWith('chrome-extension')).id);
+const win0 = (await api(() => chrome.windows.getCurrent())).id;
+const groupOrder = async () => {
+  const ts = await tabs();
+  const first = (g) => Math.min(...ts.filter((t) => t.groupId === g.id).map((t) => t.index));
+  return (await groups()).filter((g) => g.windowId === win0).sort((a, b) => first(a) - first(b)).map((g) => g.title);
+};
+r = await send({ type: 'sortGroups', windowId: win0, key: 'size' });
+await sleep(300);
+check(r.ok && (await groupOrder())[0] === 'Dev', `sort groups by size puts Dev (3 tabs) first: ${await groupOrder()}`);
+r = await send({ type: 'sortGroups', windowId: win0, key: 'name' });
+await sleep(300);
+const names = await groupOrder();
+check(r.ok && JSON.stringify(names) === JSON.stringify([...names].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))), `sort groups by name: ${names}`);
+check((await tabs()).find((t) => t.url.startsWith('chrome-extension')).index === (await tabs()).length - 1, 'ungrouped tab at the end stays at the end');
+check((await tabsOf('Dev')).length === 3, 'Dev keeps its 3 tabs after sorting');
+const sess = await api(() => chrome.storage.session.get('overrides'));
+check(Object.keys(sess.overrides ?? {}).length === 0, `sorting recorded no manual overrides (${JSON.stringify(sess.overrides)})`);
+
 // 3. Manual override: user pulls a tab out of Dev -> never regrouped
 const pulled = (await tabsOf('Dev'))[0];
 await api((id) => chrome.tabs.ungroup(id), pulled.id);
