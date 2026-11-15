@@ -2,7 +2,7 @@
 // Loads dist/ into Chromium, opens fake tabs with realistic titles, groups them, and composes
 // the popup / options captures onto captioned frames. Run: bun run build && bun run screenshots
 import { chromium } from 'playwright';
-import { mkdtempSync, mkdirSync, rmSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -199,7 +199,7 @@ function stripAlpha(png) {
   if (ctype !== 6 || depth !== 8) throw new Error(`unexpected PNG colour type ${ctype}/${depth}`);
   const raw = zlib.inflateSync(Buffer.concat(idat));
   const bpp = 4, stride = w * bpp;
-  const prev = Buffer.alloc(stride); let cur = Buffer.alloc(stride);
+  const prev = Buffer.alloc(stride); const cur = Buffer.alloc(stride);
   const out = Buffer.alloc(h * (1 + w * 3));
   for (let y = 0; y < h; y++) {
     const f = raw[y * (stride + 1)]; const line = raw.subarray(y * (stride + 1) + 1, (y + 1) * (stride + 1));

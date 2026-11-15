@@ -91,7 +91,7 @@ check(r.ok && r.result === 1, `closeDuplicates closed 1 (${JSON.stringify(r)})`)
 check((await tabs()).filter((t) => t.url.includes('example.com')).length === 1, 'one example.com tab remains');
 let local = await api(() => chrome.storage.local.get(null));
 check(local.recentlyCleaned?.length === 1 && local.recentlyCleaned[0].reason === 'duplicate', 'recently cleaned has the duplicate');
-let stats = await send({ type: 'getStats' });
+const stats = await send({ type: 'getStats' });
 check(stats.ok && stats.result.cleanedThisWeek === 1, `stats cleanedThisWeek=1 (${JSON.stringify(stats)})`);
 
 // 5. Restore cleaned
