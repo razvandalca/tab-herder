@@ -28,6 +28,8 @@ export const DEFAULT_SETTINGS: Settings = {
   // Off by default (opt-in, as the issue asks): it writes browsing history to local storage.
   autosave: { enabled: false, intervalMinutes: 10, keep: 5 },
   rules: [],
+  profiles: [{ id: 'default', name: 'Default', rules: [] }],
+  activeProfileId: 'default',
 };
 
 /** Generates a short random id; good enough for rules/sessions (not security-sensitive). */

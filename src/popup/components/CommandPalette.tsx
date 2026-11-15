@@ -3,6 +3,7 @@ import { buildCommands, searchCommands, type PaletteMatch } from '@/core/palette
 import { send } from '@/shared/messages';
 import type { GroupSnapshot } from '@/shared/types';
 import type { Runner } from '../App';
+import { useSettings } from '@/ui/hooks';
 
 interface Options {
   /** Text after `>`, or null when not in palette mode. */
@@ -16,7 +17,11 @@ interface Options {
 
 /** State + keyboard handling for the `>` command palette in the popup search box. */
 export function usePalette({ query, groups, currentWindowId, run, exit }: Options) {
-  const commands = useMemo(() => buildCommands(groups, currentWindowId), [groups, currentWindowId]);
+  const [settings] = useSettings();
+  const commands = useMemo(
+    () => buildCommands(groups, currentWindowId, settings?.profiles ?? [], settings?.activeProfileId ?? ''),
+    [groups, currentWindowId, settings],
+  );
   const matches = useMemo(() => (query === null ? [] : searchCommands(query, commands)), [query, commands]);
   const [selected, setSelected] = useState(0);
   const [armed, setArmed] = useState<string | null>(null);

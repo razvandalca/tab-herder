@@ -12,6 +12,7 @@ import { QuickActions } from './components/QuickActions';
 import { GroupList } from './components/GroupList';
 import { TabRow } from './components/TabRow';
 import { RecentlyCleaned } from './components/RecentlyCleaned';
+import { ProfileSwitcher } from './components/ProfileSwitcher';
 import { CommandList, usePalette } from './components/CommandPalette';
 
 export function App() {
@@ -58,6 +59,7 @@ export function App() {
       <div class="row between">
         <h1>Tab Herder</h1>
         <div class="row">
+        <ProfileSwitcher notify={showToast} />
         {!isSidePanel() && browser && (
           <button
             type="button"

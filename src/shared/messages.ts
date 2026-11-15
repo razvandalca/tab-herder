@@ -27,6 +27,7 @@ export type Request =
   | { type: 'restoreCleaned'; id: string }
   | { type: 'clearCleaned' }
   | { type: 'importData'; data: ExportFile; rulesMode: 'replace' | 'append' }
+  | { type: 'switchProfile'; id: string }
   | { type: 'setContentScript'; enabled: boolean }
   | { type: 'sortGroupTabs'; groupId: number; key: TabSortKey }
   | { type: 'sortGroups'; windowId: number; key: GroupSortKey }

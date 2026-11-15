@@ -42,7 +42,12 @@ function quote(title: string): string {
 }
 
 /** Builds the full list of commands for the current window's state. */
-export function buildCommands(groups: GroupSnapshot[], currentWindowId: number): PaletteCommand[] {
+export function buildCommands(
+  groups: GroupSnapshot[],
+  currentWindowId: number,
+  profiles: Array<{ id: string; name: string }> = [],
+  activeProfileId = '',
+): PaletteCommand[] {
   const here = groups.filter((g) => g.windowId === currentWindowId);
   const others = groups.filter((g) => g.windowId !== currentWindowId);
   const windowId = currentWindowId;
@@ -59,6 +64,14 @@ export function buildCommands(groups: GroupSnapshot[], currentWindowId: number):
       done: 'Session saved',
     },
   ];
+  // Switching profile only changes which rules apply; it never regroups by itself.
+  if (profiles.length > 1) {
+    for (const p of profiles) {
+      if (p.id === activeProfileId) continue;
+      const id = p.id;
+      cmds.push({ id: `profile:${id}`, label: () => `Switch to profile ${quote(p.name)}`, keywords: 'profile rules switch use', request: () => ({ type: 'switchProfile', id }), done: `Profile: ${p.name}. Press Group now to apply` });
+    }
+  }
   if (here.length > 0) {
     cmds.push(
       { id: 'collapseAll', label: () => 'Collapse all groups', keywords: 'collapse all', request: () => ({ type: 'collapseAll', windowId, collapsed: true }), done: 'Collapsed' },

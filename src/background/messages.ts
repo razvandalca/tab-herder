@@ -1,6 +1,7 @@
 import type { Request, Response, Stats } from '@/shared/messages';
 import { getLocal, cleanedInLastDays, updateSettings } from '@/shared/storage';
-import type { ExportFile, Rule, Settings } from '@/shared/types';
+import type { ExportFile, Settings } from '@/shared/types';
+import { mergeImportedSettings, switchProfile } from '@/core/profiles';
 import { regroupAll, regroupWindow } from './grouping';
 import { clearCleaned, closeDuplicatesNow, restoreCleaned, runCleanup } from './cleanup';
 import { deleteSession, renameSession, restoreSession, saveGroupSession, saveWindowSession, undoClose } from './sessions';
@@ -66,6 +67,8 @@ export async function handleRequest(req: Request): Promise<unknown> {
       return clearCleaned();
     case 'importData':
       return importData(req.data, req.rulesMode);
+    case 'switchProfile':
+      return updateSettings((s) => switchProfile(s, req.id)).then((s) => s.activeProfileId === req.id);
     case 'setContentScript':
       return req.enabled ? registerContentScript() : unregisterContentScript();
     case 'sortGroupTabs':
@@ -88,29 +91,16 @@ async function getStats(): Promise<Stats> {
   return { openTabs: tabs.length, groups: groups.length, cleanedThisWeek: cleanedInLastDays(local.stats.cleanedByDay, 7) };
 }
 
-function isRule(r: unknown): r is Rule {
-  if (typeof r !== 'object' || r === null) return false;
-  const x = r as Record<string, unknown>;
-  return typeof x.name === 'string' && typeof x.pattern === 'string' && typeof x.matchType === 'string';
-}
-
 export async function importData(data: ExportFile, rulesMode: 'replace' | 'append'): Promise<{ rules: number; sessions: number }> {
-  if (!data || data.version !== 1) throw new Error('Unsupported file format');
+  if (!data || (data.version !== 1 && data.version !== 2)) throw new Error('Unsupported file format');
   let rulesCount = 0;
   if (data.settings) {
+    const file = { version: data.version, settings: data.settings as unknown as Record<string, unknown> };
     const incoming = withDefaults<Settings>(data.settings, DEFAULT_SETTINGS);
-    const rules = (Array.isArray(data.settings.rules) ? data.settings.rules : []).filter(isRule).map((r) => ({
-      ...r,
-      id: r.id || newId(),
-      enabled: r.enabled !== false,
-      color: r.color ?? 'auto',
-    }));
-    rulesCount = rules.length;
     await updateSettings((current) => {
-      const { rules: _ignored, ...rest } = incoming;
-      const existingIds = new Set(current.rules.map((r) => r.id));
-      const merged = rulesMode === 'replace' ? rules : [...current.rules, ...rules.filter((r) => !existingIds.has(r.id))];
-      return { ...current, ...rest, rules: merged };
+      const r = mergeImportedSettings(current, incoming, file, rulesMode, newId);
+      rulesCount = r.rules;
+      return r.settings;
     });
   }
   let sessionsCount = 0;

@@ -111,3 +111,20 @@ describe('searchCommands', () => {
     expect(ids('zzzz')).toEqual([]);
   });
 });
+
+describe('profile commands', () => {
+  const profiles = [{ id: 'work', name: 'Work' }, { id: 'home', name: 'Personal' }];
+  it('offers switching to every inactive profile', () => {
+    const list = buildCommands([], 1, profiles, 'work');
+    const ids = list.map((c) => c.id);
+    expect(ids).toContain('profile:home');
+    expect(ids).not.toContain('profile:work');
+    const cmd = list.find((c) => c.id === 'profile:home')!;
+    expect(cmd.label('')).toBe('Switch to profile “Personal”');
+    expect(cmd.request('')).toEqual({ type: 'switchProfile', id: 'home' });
+    expect(searchCommands('profile personal', list)[0]!.command.id).toBe('profile:home');
+  });
+  it('has no profile commands with a single profile', () => {
+    expect(buildCommands([], 1, [profiles[0]!], 'work').some((c) => c.id.startsWith('profile:'))).toBe(false);
+  });
+});

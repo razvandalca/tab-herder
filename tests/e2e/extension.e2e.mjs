@@ -244,6 +244,34 @@ r = await send({ type: 'importData', rulesMode: 'append', data: { version: 1, ex
 const sync = await api(() => chrome.storage.sync.get(null));
 check(r.ok && sync.rules.length === 4 && sync.rules.at(-1).id === 'imp', `import appended rule (${sync.rules?.length} rules)`);
 
+// 10b. Rule profiles: create one in the options page, switch from the popup without regrouping
+await ext.goto(`chrome-extension://${extId}/src/options/index.html#rules`);
+await sleep(400);
+await ext.getByRole('button', { name: 'New', exact: true }).click();
+await ext.getByLabel('New profile name').fill('Work');
+await ext.getByRole('button', { name: 'Create', exact: true }).click();
+await sleep(400);
+let syncP = await api(() => chrome.storage.sync.get(null));
+check(syncP.profiles?.list?.length === 2 && syncP.profiles.activeId === 'default' && syncP.rules.length === 4, `options page created a second profile (${JSON.stringify(syncP.profiles)})`);
+const groupsBefore = JSON.stringify((await groups()).map((g) => g.id).sort());
+const pop = await context.newPage();
+await pop.goto(`chrome-extension://${extId}/src/popup/index.html`);
+await sleep(500);
+const workId = syncP.profiles.list.find((p) => p.name === 'Work').id;
+await pop.getByLabel('Rule profile').selectOption(workId);
+await sleep(500);
+syncP = await api(() => chrome.storage.sync.get(null));
+check(syncP.profiles.activeId === workId && syncP.rules.length === 0 && syncP['rules:default:0']?.length === 4, 'popup switch makes Work active and parks Default rules in a chunk');
+check(JSON.stringify((await groups()).map((g) => g.id).sort()) === groupsBefore, 'switching profile does not regroup');
+await pop.getByLabel('Rule profile').selectOption('default');
+await sleep(500);
+syncP = await api(() => chrome.storage.sync.get(null));
+check(syncP.profiles.activeId === 'default' && syncP.rules.length === 4 && !('rules:default:0' in syncP), 'switching back restores Default rules');
+await pop.close();
+r = await send({ type: 'importData', rulesMode: 'append', data: { version: 2, exportedAt: 1, settings: { profiles: [{ id: 'ext', name: 'Imported profile', rules: [{ id: 'x1', name: 'X', matchType: 'domain', pattern: 'x.com', color: 'auto', enabled: true }] }] } } });
+syncP = await api(() => chrome.storage.sync.get(null));
+check(r.ok && syncP.profiles.list.some((p) => p.id === 'ext' && p.chunks === 1) && syncP.rules.length === 4, `version 2 import adds a profile (${JSON.stringify(r)})`);
+
 // 11. Screenshots of popup and options
 const popup = await context.newPage();
 await popup.setViewportSize({ width: 380, height: 580 });
