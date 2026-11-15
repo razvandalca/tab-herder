@@ -190,3 +190,9 @@ Tab Herder never sends data anywhere. There is no server. The optional content s
 the extension's own "is there unsaved input / what is the meta description" question. Settings and
 rules in `chrome.storage.sync` travel between your own profiles via Chrome Sync if you use it. Full
 policy: [docs/privacy.md](docs/privacy.md).
+
+The **Insights** tab on the options page is built from aggregate counts kept in `chrome.storage.local`
+on your device for 90 days: per day, the min/average/max number of open tabs, base domain names
+(e.g. `github.com`) with average open-tab counts (top 30), group titles with their largest size
+(top 15), and how many tabs cleanup closed or discarded. No URLs, page titles or browsing history
+are stored, incognito tabs are never counted, and you can pause collection or clear it from that tab.

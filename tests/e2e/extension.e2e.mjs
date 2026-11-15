@@ -341,6 +341,25 @@ await ext.goto(`chrome-extension://${extId}/src/options/index.html#sessions`);
 await sleep(500);
 check((await ext.locator('[data-testid=autosaves]').textContent()).includes('Autosave – '), 'Sessions panel lists autosaves');
 await ext.screenshot({ path: join(OUT, 'options-sessions.png'), fullPage: true });
+// 12. Insights: aggregate samples only (no URLs), cleanup split, options tab renders, clear works
+const ins = await api(() => chrome.storage.local.get(['insights', 'stats']));
+const today = Object.values(ins.insights?.days ?? {})[0];
+check(today && today.n >= 1 && today.max >= 1, `insights sampled open tabs (${JSON.stringify(today && { n: today.n, max: today.max })})`);
+check(today && Object.keys(today.domains).every((d) => !d.includes('/')), `insights store domains only: ${Object.keys(today?.domains ?? {})}`);
+check(!JSON.stringify(ins.insights).includes('https://'), 'insights contain no URLs');
+check(Object.values(ins.stats.discardedByDay ?? {}).reduce((a, b) => a + b, 0) >= 2, `discards counted per day (${JSON.stringify(ins.stats.discardedByDay)})`);
+const optErrors = [];
+ext.on('pageerror', (e) => optErrors.push(e.message));
+await ext.goto(`chrome-extension://${extId}/src/options/index.html#insights`);
+await sleep(500);
+check(await ext.locator('text=Top domains').count() === 1 && await ext.locator('.chart svg').count() === 2, 'insights tab renders charts');
+await ext.screenshot({ path: join(OUT, 'options-insights.png'), fullPage: true });
+ext.once('dialog', (d) => d.accept());
+await ext.click('text=Clear insights data');
+await sleep(400);
+const cleared = await api(() => chrome.storage.local.get(['insights', 'stats']));
+check(Object.keys(cleared.insights.days).length === 0 && Object.keys(cleared.stats.discardedByDay).length === 0, 'clear insights data wipes samples and counters');
+check(optErrors.length === 0, `no page errors on insights tab (${optErrors.join('; ')})`);
 check(errors.length === 0, `no page errors in popup / side panel (${errors.join('; ')})`);
 
 console.log(failures === 0 ? '\nALL CHECKS PASSED' : `\n${failures} CHECK(S) FAILED`);

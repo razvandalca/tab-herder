@@ -12,6 +12,7 @@ import { installMessageRouter } from './messages';
 import { scheduleBadgeUpdate } from './badge';
 import { forgetGroup, forgetTab, handleGroupChange, touchGroup, touchTab } from './overrides';
 import { registerContentScript } from './contentScripts';
+import { maybeSampleInsights } from './insights';
 
 const log = (...a: unknown[]) => console.debug('[tab-herder]', ...a);
 
@@ -20,6 +21,7 @@ async function startup(): Promise<void> {
   await ensureCleanupAlarm(settings);
   await ensureAutosaveAlarm(settings);
   scheduleBadgeUpdate();
+  void maybeSampleInsights();
   if (settings.cleanup.detectUnsavedForms || settings.contentGrouping) await registerContentScript();
 }
 
@@ -36,6 +38,7 @@ chrome.runtime.onStartup.addListener(() => {
 // ---- tab events --------------------------------------------------------------
 chrome.tabs.onCreated.addListener((tab) => {
   scheduleBadgeUpdate();
+  void maybeSampleInsights();
   if (tab.windowId !== undefined) void maybeAutoGroup(tab.windowId);
 });
 
@@ -48,6 +51,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 
 chrome.tabs.onRemoved.addListener((tabId) => {
   scheduleBadgeUpdate();
+  void maybeSampleInsights();
   void forgetTab(tabId);
 });
 
@@ -77,6 +81,7 @@ chrome.tabGroups.onUpdated.addListener((g) => {
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === CLEANUP_ALARM) {
     void runCleanup().then((r) => log('cleanup', r));
+    void maybeSampleInsights();
   }
   if (alarm.name === AUTOSAVE_ALARM) {
     void runAutosave().then((a) => log('autosave', a ? a.id : 'unchanged'));

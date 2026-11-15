@@ -9,6 +9,7 @@ import {
   setCollapsedAll, ungroup, ungroupAll,
 } from './groupActions';
 import { registerContentScript, unregisterContentScript } from './contentScripts';
+import { clearInsights, setInsightsPaused } from './insights';
 import { deleteAutosave, restoreAutosave, runAutosave } from './autosave';
 import { sortGroupsInWindow, sortTabsInGroup } from './sorting';
 import { patchLocal } from '@/shared/storage';
@@ -73,6 +74,10 @@ export async function handleRequest(req: Request): Promise<unknown> {
       return sortGroupsInWindow(req.windowId, req.key);
     case 'undoClose':
       return undoClose(req.ids);
+    case 'clearInsights':
+      return clearInsights();
+    case 'setInsightsPaused':
+      return setInsightsPaused(req.paused);
     default:
       throw new Error(`Unknown request: ${(req as { type: string }).type}`);
   }

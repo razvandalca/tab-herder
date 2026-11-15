@@ -30,7 +30,9 @@ export type Request =
   | { type: 'setContentScript'; enabled: boolean }
   | { type: 'sortGroupTabs'; groupId: number; key: TabSortKey }
   | { type: 'sortGroups'; windowId: number; key: GroupSortKey }
-  | { type: 'undoClose'; ids: string[] };
+  | { type: 'undoClose'; ids: string[] }
+  | { type: 'clearInsights' }
+  | { type: 'setInsightsPaused'; paused: boolean };
 
 /** Result of closeGroup / closeAllGroups: how many were closed, and auto-saved session ids for Undo. */
 export interface CloseResult {

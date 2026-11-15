@@ -120,6 +120,8 @@ export interface CleanedEntry {
 export interface Stats {
   /** YYYY-MM-DD -> number of tabs closed that day. */
   cleanedByDay: Record<string, number>;
+  /** YYYY-MM-DD -> number of tabs discarded by cleanup that day. */
+  discardedByDay: Record<string, number>;
 }
 
 /** chrome.storage.local */
