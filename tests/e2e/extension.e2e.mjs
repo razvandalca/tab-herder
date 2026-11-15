@@ -1,7 +1,7 @@
 // End-to-end smoke test: loads dist/ into Chromium (Playwright), opens fake pages for several
 // domains via request interception, and exercises grouping, rules, overrides, duplicates,
 // cleanup, sessions, group actions and import. Run: bun run build && bun run e2e
-// (needs: bunx playwright install chromium)
+// (needs: bunx playwright install chromium). Runs in CI as the "e2e" job in .github/workflows/ci.yml.
 import { chromium } from 'playwright';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
