@@ -29,6 +29,18 @@ Other scripts:
 - `bun run package` — builds and zips `dist/` into `release/tab-herder-<version>.zip` for upload to the Chrome Web Store (manifest at the archive root). Bump `version` in `package.json` before each release.
 - `bun run screenshots` — generates the five 1280×800 Chrome Web Store screenshots into `release/screenshots/` (needs `dist/` and Playwright Chromium). `bun run icons` also writes the padded 128 px listing icon to `release/store-icon-128.png`.
 
+## Releasing
+
+1. Bump `version` in `package.json` (e.g. `0.2.0`), commit and merge to `main`.
+2. Tag that commit and push the tag:
+   ```sh
+   git tag v0.2.0
+   git push origin v0.2.0
+   ```
+3. The **Release** workflow checks the tag matches `package.json`, runs typecheck and tests, builds
+   `tab-herder-<version>.zip` with `bun run package`, and publishes a GitHub Release with the zip
+   attached and auto-generated notes. Upload that zip to the Chrome Web Store.
+
 ## Permissions
 
 | Permission | Why it is needed |
