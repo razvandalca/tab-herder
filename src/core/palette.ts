@@ -1,6 +1,7 @@
 import type { Request } from '@/shared/messages';
 import type { GroupSnapshot } from '@/shared/types';
 import { fuzzyScore } from './fuzzy';
+import { SNOOZE_PRESETS, presetWakeTime } from './snooze';
 import { GROUP_SORT_LABELS, TAB_SORT_LABELS, type GroupSortKey, type TabSortKey } from './sorting';
 
 /** Prefix that switches the popup search from tab search to the command palette. */
@@ -64,6 +65,11 @@ export function buildCommands(
       done: 'Session saved',
     },
   ];
+  // Snooze the active tab; the wake time is computed when the command runs.
+  for (const p of SNOOZE_PRESETS) {
+    const preset = p.id;
+    cmds.push({ id: `snoozeTab:${preset}`, label: () => `Snooze this tab: ${p.label.toLowerCase()}`, keywords: 'snooze later remind tab', request: () => ({ type: 'snoozeTab', wakeAt: presetWakeTime(preset, Date.now()) }), done: 'Tab snoozed' });
+  }
   // Switching profile only changes which rules apply; it never regroups by itself.
   if (profiles.length > 1) {
     for (const p of profiles) {
@@ -107,6 +113,13 @@ export function buildCommands(
         keywords: 'sort order tabs',
         request: () => ({ type: 'sortGroupTabs', groupId, key }),
         done: 'Sorted',
+      })),
+      ...SNOOZE_PRESETS.map(({ id: preset, label }): PaletteCommand => ({
+        id: `snoozeGroup:${groupId}:${preset}`,
+        label: () => `Snooze ${name}: ${label.toLowerCase()}${where}`,
+        keywords: 'snooze later remind group',
+        request: () => ({ type: 'snoozeGroup', groupId, wakeAt: presetWakeTime(preset, Date.now()) }),
+        done: 'Group snoozed',
       })),
     );
   }

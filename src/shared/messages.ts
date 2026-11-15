@@ -33,7 +33,11 @@ export type Request =
   | { type: 'sortGroups'; windowId: number; key: GroupSortKey }
   | { type: 'undoClose'; ids: string[] }
   | { type: 'clearInsights' }
-  | { type: 'setInsightsPaused'; paused: boolean };
+  | { type: 'setInsightsPaused'; paused: boolean }
+  | { type: 'snoozeTab'; tabId?: number; wakeAt: number }
+  | { type: 'snoozeGroup'; groupId: number; wakeAt: number }
+  | { type: 'wakeSnoozed'; id: string }
+  | { type: 'cancelSnoozed'; id: string };
 
 /** Result of closeGroup / closeAllGroups: how many were closed, and auto-saved session ids for Undo. */
 export interface CloseResult {

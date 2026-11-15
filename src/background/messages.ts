@@ -10,6 +10,7 @@ import {
   setCollapsedAll, ungroup, ungroupAll,
 } from './groupActions';
 import { registerContentScript, unregisterContentScript } from './contentScripts';
+import { cancelSnoozed, snoozeGroup, snoozeTab, wakeSnoozed } from './snooze';
 import { clearInsights, setInsightsPaused } from './insights';
 import { deleteAutosave, restoreAutosave, runAutosave } from './autosave';
 import { sortGroupsInWindow, sortTabsInGroup } from './sorting';
@@ -71,6 +72,14 @@ export async function handleRequest(req: Request): Promise<unknown> {
       return updateSettings((s) => switchProfile(s, req.id)).then((s) => s.activeProfileId === req.id);
     case 'setContentScript':
       return req.enabled ? registerContentScript() : unregisterContentScript();
+    case 'snoozeTab':
+      return snoozeTab(req.tabId, req.wakeAt);
+    case 'snoozeGroup':
+      return snoozeGroup(req.groupId, req.wakeAt);
+    case 'wakeSnoozed':
+      return wakeSnoozed(req.id);
+    case 'cancelSnoozed':
+      return cancelSnoozed(req.id);
     case 'sortGroupTabs':
       return sortTabsInGroup(req.groupId, req.key);
     case 'sortGroups':

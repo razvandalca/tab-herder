@@ -2,6 +2,8 @@ import { regroupAll } from './grouping';
 import { closeDuplicatesNow, runCleanup } from './cleanup';
 import { closeAllGroups, closeGroup, moveGroupToNewWindow, saveAndCloseGroup, setCollapsedAll, ungroupAll } from './groupActions';
 import { NO_GROUP } from '@/shared/types';
+import { SNOOZE_PRESETS, presetWakeTime, type SnoozePreset } from '@/core/snooze';
+import { snoozeGroup, snoozeTab } from './snooze';
 import type { GroupSortKey, TabSortKey } from '@/core/sorting';
 import { GROUP_SORT_LABELS, TAB_SORT_LABELS } from '@/core/sorting';
 import { sortGroupsInWindow, sortTabsInGroup } from './sorting';
@@ -65,7 +67,25 @@ export function installContextMenus(): void {
       }
     }
     installSortMenus();
+    installSnoozeMenus();
   });
+}
+
+function installSnoozeMenus(): void {
+  const contexts: ['page', 'action'] = ['page', 'action'];
+  chrome.contextMenus.create({ id: 'sep-snooze', parentId: ROOT, type: 'separator', contexts });
+  for (const [id, title] of [['snooze-tab', 'Snooze this tab'], ['snooze-group', "Snooze this tab's group"]] as const) {
+    chrome.contextMenus.create({ id, parentId: ROOT, title, contexts });
+    for (const p of SNOOZE_PRESETS) chrome.contextMenus.create({ id: `${id}:${p.id}`, parentId: id, title: p.label, contexts });
+  }
+}
+
+/** "snooze-tab:tomorrow" / "snooze-group:nextWeek" menu clicks. */
+async function handleSnoozeMenu(menuId: string, tab: chrome.tabs.Tab | undefined, groupId: number): Promise<void> {
+  const [kind, preset] = menuId.split(':') as [string, SnoozePreset];
+  const wakeAt = presetWakeTime(preset, Date.now());
+  if (kind === 'snooze-tab' && tab?.id !== undefined) await snoozeTab(tab.id, wakeAt);
+  if (kind === 'snooze-group' && groupId !== NO_GROUP) await snoozeGroup(groupId, wakeAt);
 }
 
 export async function handleContextMenu(info: chrome.contextMenus.OnClickData, tab?: chrome.tabs.Tab): Promise<void> {
@@ -108,5 +128,9 @@ export async function handleContextMenu(info: chrome.contextMenus.OnClickData, t
     case 'cleanup-now':
       await runCleanup({ force: true });
       break;
+    default:
+      if (typeof info.menuItemId === 'string' && info.menuItemId.startsWith('snooze-')) {
+        await handleSnoozeMenu(info.menuItemId, tab, groupId);
+      }
   }
 }

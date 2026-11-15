@@ -50,8 +50,8 @@ policy) is in [docs/publishing.md](docs/publishing.md) and [docs/store-listing.m
 |---|---|
 | `tabs` | Read tab URLs, titles and favicons to match rules, find duplicates and show the tab list; discard inactive tabs. |
 | `tabGroups` | Create, rename, recolour, collapse and move tab groups. |
-| `storage` | Settings and rules in `chrome.storage.sync`; sessions, stats and the "recently cleaned" list in `chrome.storage.local`; short-lived bookkeeping in `chrome.storage.session`. |
-| `alarms` | Run the cleanup pass on a schedule even though the MV3 service worker is not always running. |
+| `storage` | Settings and rules in `chrome.storage.sync`; sessions, snoozed tabs, stats and the "recently cleaned" list in `chrome.storage.local`; short-lived bookkeeping in `chrome.storage.session`. |
+| `alarms` | Run the cleanup pass on a schedule and reopen snoozed tabs on time, even though the MV3 service worker is not always running. |
 | `contextMenus` | The "Tab Herder" right-click submenu on pages and on the toolbar icon. |
 | `sidePanel` | Show the same Tab Herder view in Chrome's side panel so search and the group list stay open while you browse. |
 | `scripting` + `<all_urls>` (**optional**: `optional_permissions` / `optional_host_permissions`) | Only requested, with a Chrome prompt, when you enable **Never touch tabs with unsaved form input** or **Group by content**. It injects a tiny script that watches for typing in forms and reads the page's meta description. Nothing is sent anywhere. Turning both features off releases the permission. |
@@ -97,6 +97,14 @@ original group names and colours. Export and import sessions and rules as JSON (
 **Autosaves** (opt-in, Sessions tab): every N minutes Tab Herder snapshots all non-incognito windows —
 groups with titles and colours, tab URLs, ungrouped tabs — but only when something changed, keeps the
 last few (default 5) and lists them as "Autosave – <time>", restorable and deletable.
+
+### Snooze
+Close a tab or a whole group now and reopen it later: *Later today* (+3 h), *Tonight* (19:00),
+*Tomorrow morning* (09:00), *Next week* (Monday 09:00) or a custom date and time. From the popup
+("Snooze this tab…", or **Snooze…** in a group's menu) or the right-click menu. Groups come back
+with their title and colour; a single tab rejoins its group if one with the same name is open.
+Snoozed items are listed in the popup (**Wake now** / **Cancel**, which forgets them) and anything
+that came due while Chrome was closed reopens at the next start. Incognito tabs can't be snoozed.
 
 ### Popup
 Fuzzy search across all open tabs (title and URL, type to filter, click to jump), groups in this
@@ -183,6 +191,7 @@ src/core/             pure logic, no chrome.* calls, fully unit-tested
   fuzzy.ts            popup search
   palette.ts          popup command palette (commands, arguments, matching)
   classify.ts         content heuristic
+  snooze.ts           snooze presets and wake-time maths
 src/background/       MV3 service worker (stateless; reads state from storage)
 src/popup/            popup UI (Preact)
 src/options/          options page (Preact)

@@ -53,6 +53,14 @@ describe('buildCommands', () => {
     expect(req('sortGroups:name')).toEqual({ type: 'sortGroups', windowId: 1, key: 'name' });
     expect(req('sortTabs:10:domain')).toEqual({ type: 'sortGroupTabs', groupId: 10, key: 'domain' });
   });
+  it('adds snooze commands for the active tab and each group, timed when run', () => {
+    const before = Date.now();
+    const tab = cmds.find((c) => c.id === 'snoozeTab:tomorrow')!.request('') as { type: string; wakeAt: number };
+    expect(tab.type).toBe('snoozeTab');
+    expect(tab.wakeAt).toBeGreaterThan(before);
+    expect(cmds.find((c) => c.id === 'snoozeGroup:12:nextWeek')!.request('')).toEqual({ type: 'snoozeGroup', groupId: 12, wakeAt: expect.any(Number) });
+    expect(searchCommands('snooze dev tonight', cmds)[0]!.command.id).toBe('snoozeGroup:10:tonight');
+  });
   it('marks only close-all as needing confirmation, with a count', () => {
     const confirming = cmds.filter((c) => c.confirm);
     expect(confirming.map((c) => c.id)).toEqual(['closeAllGroups']);

@@ -272,12 +272,65 @@ r = await send({ type: 'importData', rulesMode: 'append', data: { version: 2, ex
 syncP = await api(() => chrome.storage.sync.get(null));
 check(r.ok && syncP.profiles.list.some((p) => p.id === 'ext' && p.chunks === 1) && syncP.rules.length === 4, `version 2 import adds a profile (${JSON.stringify(r)})`);
 
+// 10c. Snooze: a group wakes via the alarm with title/colour; a tab wakes now; cancel forgets
+const waitFor = async (fn, ms = 5000) => { const end = Date.now() + ms; while (Date.now() < end) { if (await fn()) return true; await sleep(150); } return false; };
+const snoozedList = async () => (await api(() => chrome.storage.local.get('snoozed'))).snoozed ?? [];
+const pa = await open('https://snooze-a.com/1');
+const pb = await open('https://snooze-a.com/2');
+await sleep(300);
+const snzTabs = (await tabs()).filter((t) => t.url.includes('snooze-a.com'));
+const snzGroup = await api((ids) => chrome.tabs.group({ tabIds: ids }), snzTabs.map((t) => t.id));
+await api((id) => chrome.tabGroups.update(id, { title: 'Later', color: 'purple' }), snzGroup);
+r = await send({ type: 'snoozeGroup', groupId: snzGroup, wakeAt: Date.now() + 3000 });
+await sleep(400);
+check(r.ok && r.result.kind === 'group', `snoozeGroup ok (${JSON.stringify(r).slice(0, 120)})`);
+check(!(await tabs()).some((t) => t.url.includes('snooze-a.com')), 'snoozed group tabs closed');
+check((await snoozedList()).length === 1, 'snoozed group stored');
+const alarm = await api(() => chrome.alarms.get('tab-herder:snooze'));
+check(!!alarm, 'snooze alarm scheduled');
+await waitFor(async () => (await tabs()).filter((t) => t.url.includes('snooze-a.com') && t.groupId !== -1).length === 2, 8000);
+const woke = (await groups()).find((g) => g.title === 'Later');
+check(woke && woke.color === 'purple' && (await tabs()).filter((t) => t.groupId === woke.id).length === 2, `group woke by alarm with title/colour (${JSON.stringify(woke)})`);
+check((await snoozedList()).length === 0, 'woken group removed from storage');
+check(!(await api(() => chrome.alarms.get('tab-herder:snooze'))), 'snooze alarm cleared when nothing is snoozed');
+void pa; void pb;
+
+await open('https://snooze-b.com/x');
+await sleep(300);
+let snzTab = (await tabs()).find((t) => t.url.includes('snooze-b.com'));
+r = await send({ type: 'snoozeTab', tabId: snzTab.id, wakeAt: Date.now() + 7 * 86_400_000 });
+await sleep(300);
+check(r.ok && !(await tabs()).some((t) => t.url.includes('snooze-b.com')), 'snoozeTab closed the tab');
+r = await send({ type: 'snoozeTab', tabId: extTab.id, wakeAt: Date.now() + 60_000 });
+check(!r.ok, 'extension pages cannot be snoozed');
+r = await send({ type: 'snoozeTab', tabId: snzTab.id, wakeAt: Date.now() - 1 });
+check(!r.ok, 'past wake time rejected');
+let [snzItem] = await snoozedList();
+r = await send({ type: 'wakeSnoozed', id: snzItem.id });
+check(r.ok && (await waitFor(async () => (await tabs()).some((t) => t.url.includes('snooze-b.com')))), 'wake now reopened the tab');
+snzTab = (await tabs()).find((t) => t.url.includes('snooze-b.com'));
+await send({ type: 'snoozeTab', tabId: snzTab.id, wakeAt: Date.now() + 86_400_000 });
+[snzItem] = await snoozedList();
+r = await send({ type: 'cancelSnoozed', id: snzItem.id });
+await sleep(300);
+check(r.ok && (await snoozedList()).length === 0 && !(await tabs()).some((t) => t.url.includes('snooze-b.com')), 'cancel forgets the snoozed tab');
+// Leave one snoozed so the popup screenshot shows the section.
+await open('https://snooze-c.com/');
+await waitFor(async () => (await tabs()).some((t) => t.url.includes('snooze-c.com')));
+await send({ type: 'snoozeTab', tabId: (await tabs()).find((t) => t.url.includes('snooze-c.com')).id, wakeAt: Date.now() + 86_400_000 });
+
 // 11. Screenshots of popup and options
 const popup = await context.newPage();
 await popup.setViewportSize({ width: 380, height: 580 });
 await popup.goto(`chrome-extension://${extId}/src/popup/index.html`);
 await sleep(600);
 await popup.screenshot({ path: join(OUT, 'popup.png') });
+check(await popup.getByRole('list', { name: 'Snoozed tabs and groups' }).isVisible(), 'popup lists snoozed items');
+await popup.getByText('Other windows').click(); await sleep(200);
+await popup.getByRole('button', { name: /^Actions for/ }).first().click();
+await popup.getByRole('menuitem', { name: 'Snooze…' }).click();
+await sleep(200);
+await popup.screenshot({ path: join(OUT, 'popup-snooze.png') });
 await popup.fill('input[type=search]', 'git');
 await sleep(200);
 await popup.screenshot({ path: join(OUT, 'popup-search.png') });

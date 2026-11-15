@@ -12,6 +12,7 @@ import { QuickActions } from './components/QuickActions';
 import { GroupList } from './components/GroupList';
 import { TabRow } from './components/TabRow';
 import { RecentlyCleaned } from './components/RecentlyCleaned';
+import { Snoozed } from './components/Snoozed';
 import { ProfileSwitcher } from './components/ProfileSwitcher';
 import { CommandList, usePalette } from './components/CommandPalette';
 
@@ -114,6 +115,7 @@ export function App() {
               </div>
             </details>
           )}
+          <Snoozed run={run} currentTab={browser?.tabs.find((t) => t.active && t.windowId === browser.currentWindowId)} />
           {local && <RecentlyCleaned entries={local.recentlyCleaned} closed={local.sessions.filter((s) => s.autoSaved)} run={run} />}
         </>
       )}
