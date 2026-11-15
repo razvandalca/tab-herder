@@ -82,11 +82,13 @@ export function CommandList({ matches, selected, armed, execute }: ListProps) {
             <div
               key={m.command.id}
               role="option"
+              tabIndex={-1}
               aria-selected={i === selected}
               class={`item clickable ${i === selected ? 'selected' : ''}`}
               style={m.command.confirm ? 'color: var(--danger)' : ''}
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => execute(i)}
+              onKeyDown={(e) => { if (e.key === 'Enter') execute(i); }}
             >
               <span class="grow ellipsis">{confirming ? m.command.confirm : m.label}</span>
             </div>

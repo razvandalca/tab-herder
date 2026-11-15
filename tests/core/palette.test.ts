@@ -50,6 +50,8 @@ describe('buildCommands', () => {
     expect(req('move:10')).toEqual({ type: 'moveGroupToNewWindow', groupId: 10 });
     expect(req('collapse:10')).toEqual({ type: 'setCollapsed', groupId: 10, collapsed: true });
     expect(req('expand:11')).toEqual({ type: 'setCollapsed', groupId: 11, collapsed: false });
+    expect(req('sortGroups:name')).toEqual({ type: 'sortGroups', windowId: 1, key: 'name' });
+    expect(req('sortTabs:10:domain')).toEqual({ type: 'sortGroupTabs', groupId: 10, key: 'domain' });
   });
   it('marks only close-all as needing confirmation, with a count', () => {
     const confirming = cmds.filter((c) => c.confirm);
@@ -94,6 +96,8 @@ describe('searchCommands', () => {
     expect(ids('close group Dev')[0]).toBe('closeGroup:10');
     expect(ids('move Dev to new window')[0]).toBe('move:10');
     expect(ids('expand docs')[0]).toBe('expand:11');
+    expect(ids('sort groups by size')[0]).toBe('sortGroups:size');
+    expect(ids('sort tabs dev domain')[0]).toBe('sortTabs:10:domain');
   });
   it('puts an argument command first and shows the argument in its label', () => {
     const [top] = searchCommands('save session Research', cmds);

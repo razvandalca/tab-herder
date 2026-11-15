@@ -1,16 +1,10 @@
-import { newId } from '@/shared/defaults';
+import { CLOSED_SESSIONS_MAX, newId } from '@/shared/defaults';
 import { getLocal, patchLocal } from '@/shared/storage';
-import type { SavedGroup, SavedTab, Session, TabSnapshot } from '@/shared/types';
+import type { GroupSnapshot, SavedGroup, SavedTab, Session, TabSnapshot } from '@/shared/types';
 import { NO_GROUP } from '@/shared/types';
+import { addClosedSessions, buildClosedSessions, isSavable as savable, toSavedTab as toSaved } from '@/core/sessions';
 import { allGroups, allTabs, quietly, tuple } from './tabs';
 import { markPendingMoves } from './overrides';
-
-const toSaved = (t: TabSnapshot): SavedTab => ({ url: t.url, title: t.title, pinned: t.pinned, favIconUrl: t.favIconUrl });
-
-function savable(t: TabSnapshot): boolean {
-  // chrome:// and similar pages cannot be reopened by extensions; skip empty new tabs too.
-  return /^(https?|ftp|file):/.test(t.url);
-}
 
 export async function snapshotWindow(windowId: number): Promise<Pick<Session, 'groups' | 'ungrouped'>> {
   const [tabs, groups] = await Promise.all([allTabs({ windowId }), allGroups({ windowId })]);
@@ -79,20 +73,38 @@ export async function restoreSession(id: string): Promise<void> {
   const session = local.sessions.find((s) => s.id === id);
   if (!session) throw new Error('Session not found');
   await openSession(session);
+  // Auto-saved "closed groups" entries are one-shot: once reopened they are no longer needed.
+  if (session.autoSaved) await deleteSession(id);
 }
 
-export async function openSession(session: Session): Promise<void> {
+/**
+ * Opens the session and recreates its groups. With `intoWindowId` (and that window still open)
+ * the tabs are appended there; otherwise a new window is created.
+ */
+export async function openSession(session: Session, intoWindowId?: number): Promise<void> {
   const ordered: Array<{ tab: SavedTab; group: SavedGroup | null }> = [];
   for (const g of session.groups) for (const t of g.tabs) ordered.push({ tab: t, group: g });
   for (const t of session.ungrouped) ordered.push({ tab: t, group: null });
   if (!ordered.length) throw new Error('Session is empty');
 
-  const win = await chrome.windows.create({ url: ordered.map((o) => o.tab.url), focused: true });
-  if (!win?.id) throw new Error('Could not create window');
-  const windowId = win.id;
-  const created = (await chrome.tabs.query({ windowId })).sort((a, b) => a.index - b.index);
-  const ids = created.map((t) => t.id!).filter((x) => x !== undefined);
-  // windows.create opens the URLs in order, so index i corresponds to ordered[i].
+  const target = intoWindowId === undefined ? undefined : await quietly(chrome.windows.get(intoWindowId));
+  let windowId: number;
+  let ids: Array<number | undefined>;
+  if (target?.id !== undefined) {
+    windowId = target.id;
+    ids = [];
+    for (const [i, o] of ordered.entries()) {
+      const t = await quietly(chrome.tabs.create({ windowId, url: o.tab.url, active: i === 0 }));
+      ids.push(t?.id);
+    }
+  } else {
+    const win = await chrome.windows.create({ url: ordered.map((o) => o.tab.url), focused: true });
+    if (!win?.id) throw new Error('Could not create window');
+    windowId = win.id;
+    const created = (await chrome.tabs.query({ windowId })).sort((a, b) => a.index - b.index);
+    ids = created.map((t) => t.id);
+  }
+  // Tabs are created in order, so index i corresponds to ordered[i].
   const tabIdFor = (i: number) => ids[i];
 
   // Pinned first: pinning moves tabs to the front, which is what the user expects.
@@ -129,4 +141,26 @@ export async function renameSession(id: string, name: string): Promise<void> {
     const s = l.sessions.find((x) => x.id === id);
     if (s) s.name = name.trim() || s.name;
   });
+}
+
+/** Auto-saves groups that are about to be closed (one session per window). Returns the new session ids. */
+export async function recordClosedGroups(tabs: TabSnapshot[], groups: GroupSnapshot[]): Promise<string[]> {
+  const added = buildClosedSessions(tabs, groups, { now: Date.now(), newId });
+  if (!added.length) return [];
+  await patchLocal((l) => {
+    l.sessions = addClosedSessions(l.sessions, added, CLOSED_SESSIONS_MAX);
+  });
+  return added.map((s) => s.id);
+}
+
+/** Undo for a close action: reopens the auto-saved groups in their original window and forgets them. */
+export async function undoClose(ids: string[]): Promise<number> {
+  const local = await getLocal();
+  const sessions = local.sessions.filter((s) => ids.includes(s.id));
+  if (!sessions.length) throw new Error('Nothing to undo');
+  for (const s of sessions) await openSession(s, s.windowId);
+  await patchLocal((l) => {
+    l.sessions = l.sessions.filter((s) => !ids.includes(s.id));
+  });
+  return sessions.reduce((n, s) => n + s.groups.length, 0);
 }

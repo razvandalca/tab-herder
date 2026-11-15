@@ -78,6 +78,10 @@ export interface Session {
   kind: 'window' | 'group';
   groups: SavedGroup[];
   ungrouped: SavedTab[];
+  /** Saved automatically when Tab Herder closed these groups (capped, oldest dropped first). */
+  autoSaved?: boolean;
+  /** Window the groups were closed from; Undo restores into it while it is still open. */
+  windowId?: number;
 }
 
 export type CleanReason = 'duplicate' | 'inactive' | 'groupAutoClose';

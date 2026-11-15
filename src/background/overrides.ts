@@ -12,6 +12,17 @@ export async function markPendingMoves(tabIds: number[]): Promise<void> {
   });
 }
 
+/**
+ * Drops pending-move marks that no group-change event consumed (e.g. reordering within a group),
+ * so a real manual move of those tabs right afterwards is still recorded as an override.
+ */
+export async function clearPendingMoves(tabIds: number[]): Promise<void> {
+  if (!tabIds.length) return;
+  await patchSessionState((s) => {
+    for (const id of tabIds) delete s.pendingMoves[id];
+  });
+}
+
 export async function markManagedGroup(groupId: number, key: string): Promise<void> {
   await patchSessionState((s) => {
     s.managedGroups[groupId] = { key, createdAt: Date.now() };

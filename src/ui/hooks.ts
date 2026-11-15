@@ -75,13 +75,22 @@ export function useStats(deps: unknown[] = []): Stats | null {
   return stats;
 }
 
-export function useToast(): [string | null, (msg: string) => void] {
-  const [msg, setMsg] = useState<string | null>(null);
-  const show = useCallback((m: string) => {
-    setMsg(m);
-    setTimeout(() => setMsg((cur) => (cur === m ? null : cur)), 2200);
+export interface ToastAction {
+  label: string;
+  onClick: () => void;
+}
+
+/** Short-lived status message. With an action (e.g. Undo) it stays up longer and shows a button. */
+export function useToast(): [string | null, (msg: string, action?: ToastAction) => void, ToastAction | null, () => void] {
+  const [toast, setToast] = useState<{ msg: string; action: ToastAction | null; id: number } | null>(null);
+  const seq = useRef(0);
+  const show = useCallback((msg: string, action?: ToastAction) => {
+    const id = ++seq.current;
+    setToast({ msg, action: action ?? null, id });
+    setTimeout(() => setToast((cur) => (cur?.id === id ? null : cur)), action ? 6000 : 2200);
   }, []);
-  return [msg, show];
+  const dismiss = useCallback(() => setToast(null), []);
+  return [toast?.msg ?? null, show, toast?.action ?? null, dismiss];
 }
 
 export function errorMessage(e: unknown): string {

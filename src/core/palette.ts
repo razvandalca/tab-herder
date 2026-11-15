@@ -1,6 +1,7 @@
 import type { Request } from '@/shared/messages';
 import type { GroupSnapshot } from '@/shared/types';
 import { fuzzyScore } from './fuzzy';
+import { GROUP_SORT_LABELS, TAB_SORT_LABELS, type GroupSortKey, type TabSortKey } from './sorting';
 
 /** Prefix that switches the popup search from tab search to the command palette. */
 export const PALETTE_PREFIX = '>';
@@ -72,6 +73,9 @@ export function buildCommands(groups: GroupSnapshot[], currentWindowId: number):
         confirm: `Close ${here.length} group${here.length === 1 ? '' : 's'}? Press Enter again`,
       },
     );
+    for (const [key, by] of Object.entries(GROUP_SORT_LABELS) as Array<[GroupSortKey, string]>) {
+      cmds.push({ id: `sortGroups:${key}`, label: () => `Sort groups ${by.toLowerCase()}`, keywords: 'sort order groups', request: () => ({ type: 'sortGroups', windowId, key }), done: 'Groups sorted' });
+    }
   }
   for (const g of [...here, ...others]) {
     const name = quote(g.title);
@@ -84,6 +88,13 @@ export function buildCommands(groups: GroupSnapshot[], currentWindowId: number):
       g.collapsed
         ? { id: `expand:${groupId}`, label: () => `Expand group ${name}${where}`, request: () => ({ type: 'setCollapsed', groupId, collapsed: false }), done: 'Expanded' }
         : { id: `collapse:${groupId}`, label: () => `Collapse group ${name}${where}`, request: () => ({ type: 'setCollapsed', groupId, collapsed: true }), done: 'Collapsed' },
+      ...(Object.entries(TAB_SORT_LABELS) as Array<[TabSortKey, string]>).map(([key, by]): PaletteCommand => ({
+        id: `sortTabs:${groupId}:${key}`,
+        label: () => `Sort tabs in ${name} ${by.toLowerCase()}${where}`,
+        keywords: 'sort order tabs',
+        request: () => ({ type: 'sortGroupTabs', groupId, key }),
+        done: 'Sorted',
+      })),
     );
   }
   return cmds;
