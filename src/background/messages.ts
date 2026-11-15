@@ -3,7 +3,7 @@ import { getLocal, cleanedInLastDays, updateSettings } from '@/shared/storage';
 import type { ExportFile, Rule, Settings } from '@/shared/types';
 import { regroupAll, regroupWindow } from './grouping';
 import { clearCleaned, closeDuplicatesNow, restoreCleaned, runCleanup } from './cleanup';
-import { deleteSession, renameSession, restoreSession, saveGroupSession, saveWindowSession } from './sessions';
+import { deleteSession, renameSession, restoreSession, saveGroupSession, saveWindowSession, undoClose } from './sessions';
 import {
   closeAllGroups, closeGroup, moveGroupToNewWindow, recolorGroup, renameGroup, saveAndCloseGroup, setCollapsed,
   setCollapsedAll, ungroup, ungroupAll,
@@ -59,6 +59,8 @@ export async function handleRequest(req: Request): Promise<unknown> {
       return importData(req.data, req.rulesMode);
     case 'setContentScript':
       return req.enabled ? registerContentScript() : unregisterContentScript();
+    case 'undoClose':
+      return undoClose(req.ids);
     default:
       throw new Error(`Unknown request: ${(req as { type: string }).type}`);
   }

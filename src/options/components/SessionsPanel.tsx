@@ -2,6 +2,7 @@ import { useState } from 'preact/hooks';
 import type { LocalState, Session } from '@/shared/types';
 import { send } from '@/shared/messages';
 import { COLOR_HEX } from '@/core/colors';
+import { CLOSED_SESSIONS_MAX } from '@/shared/defaults';
 import type { PanelProps } from '../App';
 
 interface Props extends PanelProps {
@@ -36,7 +37,7 @@ export function SessionsPanel({ local, notify, fail }: Props) {
           <input class="input grow" placeholder="Session name" value={saveName} onInput={(e) => setSaveName((e.target as HTMLInputElement).value)} />
           <button class="btn primary" type="submit">Save</button>
         </form>
-        <div class="hint">You can also save a single group from the popup menu or the right-click menu (“Save &amp; close”).</div>
+        <div class="hint">You can also save a single group from the popup menu or the right-click menu (“Save &amp; close”). Groups closed with “Close all” or “Close group” are kept here automatically (the last {CLOSED_SESSIONS_MAX}) so you can restore them.</div>
       </div>
       <div class="card">
         <h2>Saved sessions <span class="badge">{local.sessions.length}</span></h2>
@@ -53,7 +54,7 @@ export function SessionsPanel({ local, notify, fail }: Props) {
               ) : (
                 <div class="grow">
                   <b>{s.name}</b>
-                  <div class="small muted">{s.kind === 'window' ? 'Window' : 'Group'} · {tabCount(s)} tabs · {new Date(s.createdAt).toLocaleString()}</div>
+                  <div class="small muted">{s.autoSaved ? 'Closed groups (auto-saved)' : s.kind === 'window' ? 'Window' : 'Group'} · {tabCount(s)} tabs · {new Date(s.createdAt).toLocaleString()}</div>
                 </div>
               )}
               <div class="row" style="gap: 4px">
