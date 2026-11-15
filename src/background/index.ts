@@ -4,7 +4,8 @@ import { getSettings, onSettingsChanged } from '@/shared/storage';
 import { NO_GROUP } from '@/shared/types';
 import { scheduleRegroup } from './grouping';
 import { ensureCleanupAlarm, runCleanup } from './cleanup';
-import { CLEANUP_ALARM } from '@/shared/defaults';
+import { AUTOSAVE_ALARM, CLEANUP_ALARM } from '@/shared/defaults';
+import { ensureAutosaveAlarm, pruneStoredAutosaves, runAutosave } from './autosave';
 import { installContextMenus, handleContextMenu } from './contextMenus';
 import { handleCommand } from './commands';
 import { installMessageRouter } from './messages';
@@ -13,14 +14,17 @@ import { forgetGroup, forgetTab, handleGroupChange, touchGroup, touchTab } from 
 import { registerContentScript } from './contentScripts';
 import { initSnooze, wakeDue, ensureSnoozeAlarm } from './snooze';
 import { SNOOZE_ALARM } from '@/shared/snoozeStore';
+import { maybeSampleInsights } from './insights';
 
 const log = (...a: unknown[]) => console.debug('[tab-herder]', ...a);
 
 async function startup(): Promise<void> {
   const settings = await getSettings();
   await ensureCleanupAlarm(settings);
+  await ensureAutosaveAlarm(settings);
   await initSnooze().catch((e: unknown) => log('snooze init failed', e));
   scheduleBadgeUpdate();
+  void maybeSampleInsights();
   if (settings.cleanup.detectUnsavedForms || settings.contentGrouping) await registerContentScript();
 }
 
@@ -37,6 +41,7 @@ chrome.runtime.onStartup.addListener(() => {
 // ---- tab events --------------------------------------------------------------
 chrome.tabs.onCreated.addListener((tab) => {
   scheduleBadgeUpdate();
+  void maybeSampleInsights();
   if (tab.windowId !== undefined) void maybeAutoGroup(tab.windowId);
 });
 
@@ -49,6 +54,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 
 chrome.tabs.onRemoved.addListener((tabId) => {
   scheduleBadgeUpdate();
+  void maybeSampleInsights();
   void forgetTab(tabId);
 });
 
@@ -78,16 +84,23 @@ chrome.tabGroups.onUpdated.addListener((g) => {
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === CLEANUP_ALARM) {
     void runCleanup().then((r) => log('cleanup', r));
-  } else if (alarm.name === SNOOZE_ALARM) {
+    void maybeSampleInsights();
+  }
+  if (alarm.name === AUTOSAVE_ALARM) {
+    void runAutosave().then((a) => log('autosave', a ? a.id : 'unchanged'));
+  }
+  if (alarm.name === SNOOZE_ALARM) {
     void wakeDue().then((n) => log('snooze woke', n)).finally(() => void ensureSnoozeAlarm());
   }
 });
-chrome.commands.onCommand.addListener((command) => void handleCommand(command));
+chrome.commands.onCommand.addListener((command, tab) => void handleCommand(command, tab));
 chrome.contextMenus.onClicked.addListener((info, tab) => void handleContextMenu(info, tab));
 installMessageRouter();
 
 onSettingsChanged((settings) => {
   void ensureCleanupAlarm(settings);
+  void ensureAutosaveAlarm(settings);
+  void pruneStoredAutosaves(settings);
   scheduleBadgeUpdate();
 });
 

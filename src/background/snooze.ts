@@ -4,14 +4,12 @@
 import { dueItems, nextWakeTime, validateWakeTime, type SnoozedItem } from '@/core/snooze';
 import { newId } from '@/shared/defaults';
 import { SNOOZE_ALARM, getSnoozed, patchSnoozed } from '@/shared/snoozeStore';
-import type { SavedTab, TabSnapshot } from '@/shared/types';
 import { NO_GROUP } from '@/shared/types';
 import { activeTab, allGroups, allTabs, quietly, snapshotTab, tuple } from './tabs';
-import { openSession, savable, snapshotGroup } from './sessions';
+import { openSession, snapshotGroup } from './sessions';
+import { isSavable as savable, toSavedTab as toSaved } from '@/core/sessions';
 import { closeTabsDiscardingGroups } from './groupActions';
 import { markPendingMoves } from './overrides';
-
-const toSaved = (t: TabSnapshot): SavedTab => ({ url: t.url, title: t.title, pinned: t.pinned, favIconUrl: t.favIconUrl });
 
 /** Snoozes one tab (the active tab of the focused window when tabId is omitted). */
 export async function snoozeTab(tabId: number | undefined, wakeAt: number): Promise<SnoozedItem> {

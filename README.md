@@ -41,6 +41,9 @@ Other scripts:
    `tab-herder-<version>.zip` with `bun run package`, and publishes a GitHub Release with the zip
    attached and auto-generated notes. Upload that zip to the Chrome Web Store.
 
+The full Web Store checklist (developer account, listing text, permission justifications, privacy
+policy) is in [docs/publishing.md](docs/publishing.md) and [docs/store-listing.md](docs/store-listing.md).
+
 ## Permissions
 
 | Permission | Why it is needed |
@@ -50,7 +53,8 @@ Other scripts:
 | `storage` | Settings and rules in `chrome.storage.sync`; sessions, snoozed tabs, stats and the "recently cleaned" list in `chrome.storage.local`; short-lived bookkeeping in `chrome.storage.session`. |
 | `alarms` | Run the cleanup pass on a schedule and reopen snoozed tabs on time, even though the MV3 service worker is not always running. |
 | `contextMenus` | The "Tab Herder" right-click submenu on pages and on the toolbar icon. |
-| `scripting` + `<all_urls>` (**optional**) | Only requested, with a Chrome prompt, when you enable **Never touch tabs with unsaved form input** or **Group by content**. It injects a tiny script that watches for typing in forms and reads the page's meta description. Nothing is sent anywhere. Turning both features off releases the permission. |
+| `sidePanel` | Show the same Tab Herder view in Chrome's side panel so search and the group list stay open while you browse. |
+| `scripting` + `<all_urls>` (**optional**: `optional_permissions` / `optional_host_permissions`) | Only requested, with a Chrome prompt, when you enable **Never touch tabs with unsaved form input** or **Group by content**. It injects a tiny script that watches for typing in forms and reads the page's meta description. Nothing is sent anywhere. Turning both features off releases the permission. |
 
 Keyboard shortcuts (`commands`) need no permission. Incognito tabs are ignored unless you enable
 them in settings *and* allow the extension in incognito on `chrome://extensions`.
@@ -64,6 +68,8 @@ them in settings *and* allow the extension in incognito on `chrome://extensions`
 - **Minimum group size** avoids one-tab groups. Existing groups still accept single tabs.
 - **Presets:** Dev, Docs, Social, Video, Shopping, Mail/Calendar, Cloud consoles. Add them from the
   Rules tab; duplicates are skipped.
+- **Profiles:** keep separate rule sets (e.g. Work and Personal), managed on the Rules tab. Switch
+  the active one from the popup; existing groups stay as they are until you press *Group now*.
 - **Respects you:** pinned tabs are never touched. A tab you drag into or out of a group by hand is
   remembered and never regrouped. Groups you created yourself are left alone (though tabs may join
   them if the group title matches an assignment). `chrome://` and extension pages are ignored.
@@ -88,6 +94,10 @@ Move group to a new window.
 Save the current window or a single group under a name, restore it later as a new window with the
 original group names and colours. Export and import sessions and rules as JSON (Import / Export tab).
 
+**Autosaves** (opt-in, Sessions tab): every N minutes Tab Herder snapshots all non-incognito windows —
+groups with titles and colours, tab URLs, ungrouped tabs — but only when something changed, keeps the
+last few (default 5) and lists them as "Autosave – <time>", restorable and deletable.
+
 ### Snooze
 Close a tab or a whole group now and reopen it later: *Later today* (+3 h), *Tonight* (19:00),
 *Tomorrow morning* (09:00), *Next week* (Monday 09:00) or a custom date and time. From the popup
@@ -101,6 +111,20 @@ Fuzzy search across all open tabs (title and URL, type to filter, click to jump)
 window with tab counts, quick actions (Group now · Clean up · Close duplicates · Save session),
 stats (open tabs · groups · tabs cleaned this week) and the recently cleaned list.
 
+Type `>` in the search box for the command palette: `> group now`, `> close duplicates`,
+`> collapse all`, `> close group Dev`, `> move Dev to new window`, `> save session Research`.
+Arrows + Enter run a command, Esc goes back to tab search; “Close all groups” asks for a second Enter.
+
+### Sorting
+Sort the tabs in a group by title, domain or last used (group menu `⋮` → Sort tabs), and the groups
+in a window by name or size (Sort groups row in the popup). Both are also in the right-click menu.
+Ungrouped tabs keep their place between groups, and sorting never counts as a manual move.
+
+### Side panel
+The same view can live in Chrome's side panel, so it stays open and updates as tabs change. Open it
+with the panel button in the popup header, **Tab Herder → Open in side panel** in the right-click
+menu, or Chrome's own side panel menu. Clicking a tab there switches to it without closing the panel.
+
 ### Keyboard shortcuts
 | Action | Default |
 |---|---|
@@ -108,6 +132,7 @@ stats (open tabs · groups · tabs cleaned this week) and the recently cleaned l
 | Close the current tab's group | `Alt+Shift+W` |
 | Close duplicate tabs | `Alt+Shift+D` |
 | Open tab search (popup) | `Alt+Shift+F` |
+| Open in side panel | not set (Chrome allows four suggested keys; bind one yourself) |
 
 Remap them at `chrome://extensions/shortcuts`. On macOS, Alt is Option.
 
@@ -138,14 +163,18 @@ Tips:
 
 ```json
 {
-  "version": 1,
+  "version": 2,
   "exportedAt": 1760000000000,
-  "settings": { "mode": "auto", "rules": [ { "id": "…", "name": "Dev", "matchType": "domain", "pattern": "github.com", "color": "blue", "enabled": true } ], "...": "..." },
+  "settings": { "mode": "auto", "rules": [ { "id": "…", "name": "Dev", "matchType": "domain", "pattern": "github.com", "color": "blue", "enabled": true } ],
+                "activeProfileId": "default", "profiles": [ { "id": "default", "name": "Default", "rules": [ "…" ] } ], "...": "..." },
   "sessions": [ { "id": "…", "name": "Research", "kind": "window", "createdAt": 1760000000000,
                   "groups": [ { "title": "Docs", "color": "cyan", "collapsed": false, "tabs": [ { "url": "…", "title": "…", "pinned": false } ] } ],
                   "ungrouped": [] } ]
 }
 ```
+
+Version 2 files add `profiles` and `activeProfileId`; version 1 files (rules only) still import into
+the active profile.
 
 ## Project layout
 
@@ -153,12 +182,14 @@ Tips:
 manifest.config.ts    MV3 manifest (crxjs)
 src/core/             pure logic, no chrome.* calls, fully unit-tested
   rules.ts            rule engine: url + title in, group assignment out
+  profiles.ts         rule profiles: sync storage layout, migration, import merge
   url.ts              hostname / base domain / URL normalisation
   glob.ts             match-pattern globs
   duplicates.ts       duplicate detection
   grouping.ts         grouping plan for one window
   cleanup.ts          cleanup plan (close / discard)
   fuzzy.ts            popup search
+  palette.ts          popup command palette (commands, arguments, matching)
   classify.ts         content heuristic
   snooze.ts           snooze presets and wake-time maths
 src/background/       MV3 service worker (stateless; reads state from storage)
@@ -172,4 +203,12 @@ tests/core/           Vitest suites
 ## Privacy
 
 Tab Herder never sends data anywhere. There is no server. The optional content script only answers
-the extension's own "is there unsaved input / what is the meta description" question.
+the extension's own "is there unsaved input / what is the meta description" question. Settings and
+rules in `chrome.storage.sync` travel between your own profiles via Chrome Sync if you use it. Full
+policy: [docs/privacy.md](docs/privacy.md).
+
+The **Insights** tab on the options page is built from aggregate counts kept in `chrome.storage.local`
+on your device for 90 days: per day, the min/average/max number of open tabs, base domain names
+(e.g. `github.com`) with average open-tab counts (top 30), group titles with their largest size
+(top 15), and how many tabs cleanup closed or discarded. No URLs, page titles or browsing history
+are stored, incognito tabs are never counted, and you can pause collection or clear it from that tab.

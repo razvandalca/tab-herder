@@ -1,7 +1,8 @@
 import { duplicateTabIds } from '@/core/duplicates';
+import { bumpDay } from '@/core/insights';
 import { isProtected, planCleanup } from '@/core/cleanup';
 import { CLEANUP_ALARM, RECENTLY_CLEANED_MAX, STATS_RETENTION_DAYS, newId } from '@/shared/defaults';
-import { getLocal, getSessionState, getSettings, patchLocal, todayKey } from '@/shared/storage';
+import { getLocal, getSessionState, getSettings, patchLocal } from '@/shared/storage';
 import type { CleanReason, CleanedEntry, GroupSnapshot, Settings, TabSnapshot } from '@/shared/types';
 import { NO_GROUP } from '@/shared/types';
 import { allGroups, allTabs, currentWindowId, quietly } from './tabs';
@@ -49,6 +50,7 @@ export async function runCleanup(opts: { force?: boolean } = {}): Promise<Cleanu
   for (const id of plan.discard) {
     if ((await quietly(chrome.tabs.discard(id))) !== undefined) discarded++;
   }
+  await recordDiscarded(discarded);
   return { closed, discarded };
 }
 
@@ -99,10 +101,15 @@ export async function recordCleaned(entries: CleanedEntry[]): Promise<void> {
   if (!entries.length) return;
   await patchLocal((local) => {
     local.recentlyCleaned = [...entries.reverse(), ...local.recentlyCleaned].slice(0, RECENTLY_CLEANED_MAX);
-    const key = todayKey();
-    local.stats.cleanedByDay[key] = (local.stats.cleanedByDay[key] ?? 0) + entries.length;
-    const cutoff = todayKey(Date.now() - STATS_RETENTION_DAYS * 86_400_000);
-    for (const k of Object.keys(local.stats.cleanedByDay)) if (k < cutoff) delete local.stats.cleanedByDay[k];
+    local.stats.cleanedByDay = bumpDay(local.stats.cleanedByDay, entries.length, Date.now(), STATS_RETENTION_DAYS);
+  });
+}
+
+/** Counts tabs discarded by cleanup, per day (for the Insights tab). */
+export async function recordDiscarded(count: number): Promise<void> {
+  if (!count) return;
+  await patchLocal((local) => {
+    local.stats.discardedByDay = bumpDay(local.stats.discardedByDay ?? {}, count, Date.now(), STATS_RETENTION_DAYS);
   });
 }
 

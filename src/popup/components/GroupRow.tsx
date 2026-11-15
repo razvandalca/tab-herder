@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import type { GroupColor, GroupSnapshot, TabSnapshot } from '@/shared/types';
 import { COLOR_HEX } from '@/core/colors';
+import { TAB_SORT_LABELS, type TabSortKey } from '@/core/sorting';
 import { send } from '@/shared/messages';
 import { Icons } from '@/ui/icons';
 import { ColorPicker } from '@/ui/ColorPicker';
@@ -71,6 +72,11 @@ export function GroupRow({ group, tabs, run, otherWindow }: Props) {
                 <div class="small muted" style="margin-bottom: 4px">Colour</div>
                 <ColorPicker value={group.color} onChange={(c) => act('Recoloured', () => send({ type: 'recolorGroup', groupId: group.id, color: c as GroupColor }))} />
               </div>
+              <hr />
+              <div class="small muted" style="padding: 4px 10px 0">Sort tabs</div>
+              {(Object.entries(TAB_SORT_LABELS) as Array<[TabSortKey, string]>).map(([key, label]) => (
+                <button key={key} role="menuitem" onClick={() => act('Sorted', () => send({ type: 'sortGroupTabs', groupId: group.id, key }))}>{label}</button>
+              ))}
               <hr />
               <button role="menuitem" onClick={() => { setMenu(false); setText(group.title); setEditing('save'); }}>Save &amp; close…</button>
               <button role="menuitem" onClick={() => { setMenu(false); setEditing('snooze'); }}>Snooze…</button>

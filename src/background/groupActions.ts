@@ -1,8 +1,9 @@
 import type { GroupColor } from '@/shared/types';
 import { NO_GROUP } from '@/shared/types';
-import { allTabs, activeTab, quietly, tuple } from './tabs';
+import type { CloseResult } from '@/shared/messages';
+import { allGroups, allTabs, activeTab, quietly, tuple } from './tabs';
 import { markPendingMoves } from './overrides';
-import { saveGroupSession } from './sessions';
+import { recordClosedGroups, saveGroupSession } from './sessions';
 
 /**
  * Closes tabs without leaving a "saved group" behind. Chrome saves a group when its tabs are
@@ -22,24 +23,31 @@ export async function closeTabsDiscardingGroups(tabs: Array<{ id: number; window
   await quietly(chrome.tabs.remove(ids));
 }
 
-export async function closeGroup(groupId: number): Promise<number> {
+/**
+ * Closes one group's tabs. Unless `record` is false, the group is first auto-saved (title,
+ * colour, tabs) so the close can be undone; `undo` holds the ids to pass to `undoClose`.
+ */
+export async function closeGroup(groupId: number, record = true): Promise<CloseResult> {
   const tabs = await allTabs({ groupId });
+  const undo = record && tabs.length ? await recordClosedGroups(tabs, await allGroups({ windowId: tabs[0]!.windowId })) : [];
   await closeTabsDiscardingGroups(tabs);
-  return tabs.length;
+  return { closed: tabs.length, undo };
 }
 
 /** Closes every group (and its tabs) in one window, or in all windows when windowId is omitted. */
-export async function closeAllGroups(windowId?: number): Promise<number> {
-  const groups = await chrome.tabGroups.query(windowId === undefined ? {} : { windowId });
-  if (!groups.length) return 0;
+export async function closeAllGroups(windowId?: number): Promise<CloseResult> {
+  const groups = await allGroups(windowId === undefined ? {} : { windowId });
+  if (!groups.length) return { closed: 0, undo: [] };
   const tabs = (await allTabs(windowId === undefined ? {} : { windowId })).filter((t) => t.groupId !== NO_GROUP);
+  const undo = await recordClosedGroups(tabs, groups);
   await closeTabsDiscardingGroups(tabs);
-  return groups.length;
+  return { closed: groups.length, undo };
 }
 
 export async function saveAndCloseGroup(groupId: number, name?: string): Promise<void> {
   await saveGroupSession(groupId, name);
-  await closeGroup(groupId);
+  // Already saved as a named session, so no extra auto-saved copy.
+  await closeGroup(groupId, false);
 }
 
 export async function ungroup(groupId: number): Promise<void> {

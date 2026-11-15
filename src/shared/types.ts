@@ -54,7 +54,26 @@ export interface Settings {
   contentGrouping: boolean;
   badge: { enabled: boolean; threshold: number };
   cleanup: CleanupSettings;
+  autosave: AutosaveSettings;
+  /** Rules of the active profile (the ones grouping uses). */
   rules: Rule[];
+  /** All rule profiles. The active entry's `rules` is kept in step with `rules` above. */
+  profiles: RuleProfile[];
+  activeProfileId: string;
+}
+
+/** A named rule set (e.g. Work / Personal); only the active one is used for grouping. */
+export interface RuleProfile {
+  id: string;
+  name: string;
+  rules: Rule[];
+}
+
+export interface AutosaveSettings {
+  enabled: boolean;
+  intervalMinutes: number;
+  /** How many autosaves to keep (oldest are pruned). */
+  keep: number;
 }
 
 export interface SavedTab {
@@ -78,6 +97,22 @@ export interface Session {
   kind: 'window' | 'group';
   groups: SavedGroup[];
   ungrouped: SavedTab[];
+  /** Saved automatically when Tab Herder closed these groups (capped, oldest dropped first). */
+  autoSaved?: boolean;
+  /** Window the groups were closed from; Undo restores into it while it is still open. */
+  windowId?: number;
+}
+
+/** One window's contents, in the same shape sessions use. */
+export type WindowSnapshot = Pick<Session, 'groups' | 'ungrouped'>;
+
+/** Scheduled snapshot of every window; stored apart from user-saved sessions. */
+export interface Autosave {
+  id: string;
+  createdAt: number;
+  /** Hash of the restorable shape, used to skip saving when nothing changed. */
+  fingerprint: string;
+  windows: WindowSnapshot[];
 }
 
 export type CleanReason = 'duplicate' | 'inactive' | 'groupAutoClose';
@@ -96,11 +131,14 @@ export interface CleanedEntry {
 export interface Stats {
   /** YYYY-MM-DD -> number of tabs closed that day. */
   cleanedByDay: Record<string, number>;
+  /** YYYY-MM-DD -> number of tabs discarded by cleanup that day. */
+  discardedByDay: Record<string, number>;
 }
 
 /** chrome.storage.local */
 export interface LocalState {
   sessions: Session[];
+  autosaves: Autosave[];
   recentlyCleaned: CleanedEntry[];
   stats: Stats;
 }
@@ -114,8 +152,9 @@ export interface SessionState {
   groupLastActive: Record<number, number>;
 }
 
+/** Version 1 files carry `settings.rules` only; version 2 adds `settings.profiles`. */
 export interface ExportFile {
-  version: 1;
+  version: 1 | 2;
   exportedAt: number;
   settings?: Settings;
   sessions?: Session[];

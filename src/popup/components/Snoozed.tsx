@@ -40,7 +40,7 @@ export function Snoozed({ run, currentTab }: { run: Runner; currentTab?: TabSnap
             }}
           />
         ) : (
-          <button class="btn sm" style="align-self: flex-start" onClick={() => setPicking(true)}>
+          <button type="button" class="btn sm" style="align-self: flex-start" onClick={() => setPicking(true)}>
             Snooze this tab…
           </button>
         )
@@ -61,10 +61,11 @@ export function Snoozed({ run, currentTab }: { run: Runner; currentTab?: TabSnap
                   <div class="ellipsis">{snoozedLabel(i)}</div>
                   <div class="small muted ellipsis">{describeWake(i.wakeAt, now)}</div>
                 </div>
-                <button class="btn sm" onClick={() => run('Woken', () => send({ type: 'wakeSnoozed', id: i.id }))}>
+                <button type="button" class="btn sm" onClick={() => run('Woken', () => send({ type: 'wakeSnoozed', id: i.id }))}>
                   <Icons.restore /> Wake now
                 </button>
                 <button
+                  type="button"
                   class="btn sm"
                   title="Cancel the snooze and forget these tabs"
                   aria-label={`Cancel snooze for ${snoozedLabel(i)}`}
