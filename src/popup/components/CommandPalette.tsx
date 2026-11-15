@@ -80,7 +80,11 @@ export function CommandList({ matches, selected, armed, execute }: ListProps) {
   return (
     <div class="stack">
       <div class="list palette" role="listbox" aria-label="Commands">
-        {matches.length === 0 && <div class="muted" style="padding: 8px">No matching commands</div>}
+        {matches.length === 0 && (
+          <div class="muted" style="padding: 8px">
+            No matching commands
+          </div>
+        )}
         {matches.map((m, i) => {
           const confirming = armed === m.command.id;
           return (
@@ -93,7 +97,9 @@ export function CommandList({ matches, selected, armed, execute }: ListProps) {
               style={m.command.confirm ? 'color: var(--danger)' : ''}
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => execute(i)}
-              onKeyDown={(e) => { if (e.key === 'Enter') execute(i); }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') execute(i);
+              }}
             >
               <span class="grow ellipsis">{confirming ? m.command.confirm : m.label}</span>
             </div>
@@ -101,7 +107,8 @@ export function CommandList({ matches, selected, armed, execute }: ListProps) {
         })}
       </div>
       <div class="muted small" style="padding: 0 8px">
-        <span class="kbd">↑</span> <span class="kbd">↓</span> choose · <span class="kbd">Enter</span> run · <span class="kbd">Esc</span> back to tab search
+        <span class="kbd">↑</span> <span class="kbd">↓</span> choose · <span class="kbd">Enter</span> run ·{' '}
+        <span class="kbd">Esc</span> back to tab search
       </div>
     </div>
   );

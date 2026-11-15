@@ -21,7 +21,8 @@ export async function snoozeTab(tabId: number | undefined, wakeAt: number): Prom
   let group: SnoozedItem['group'];
   if (tab.groupId !== NO_GROUP) {
     const g = await quietly(chrome.tabGroups.get(tab.groupId));
-    if (g) group = { title: g.title ?? '', color: g.color as NonNullable<SnoozedItem['group']>['color'], collapsed: false };
+    if (g)
+      group = { title: g.title ?? '', color: g.color as NonNullable<SnoozedItem['group']>['color'], collapsed: false };
   }
   const item: SnoozedItem = { id: newId(), kind: 'tab', snoozedAt: Date.now(), wakeAt, group, tabs: [toSaved(tab)] };
   await store(item);
@@ -140,8 +141,12 @@ async function reopen(item: SnoozedItem, focus: boolean): Promise<void> {
   if (windowId === undefined) {
     // No window open (e.g. Chrome running in the background): session restore opens one.
     await openSession({
-      id: item.id, name: '', createdAt: item.snoozedAt, kind: group ? 'group' : 'window',
-      groups: group ? [group] : [], ungrouped: group ? [] : item.tabs,
+      id: item.id,
+      name: '',
+      createdAt: item.snoozedAt,
+      kind: group ? 'group' : 'window',
+      groups: group ? [group] : [],
+      ungrouped: group ? [] : item.tabs,
     });
     return;
   }
@@ -155,9 +160,10 @@ async function reopen(item: SnoozedItem, focus: boolean): Promise<void> {
   if (!group || !unpinned.length) return;
   await markPendingMoves(unpinned);
   // A lone tab rejoins its old group if one with that title is still open; a group always comes back whole.
-  const existing = item.kind === 'tab' && group.title
-    ? (await allGroups({ windowId })).find((g) => g.title.toLowerCase() === group.title.toLowerCase())
-    : undefined;
+  const existing =
+    item.kind === 'tab' && group.title
+      ? (await allGroups({ windowId })).find((g) => g.title.toLowerCase() === group.title.toLowerCase())
+      : undefined;
   if (existing) {
     await quietly(chrome.tabs.group({ tabIds: tuple(unpinned), groupId: existing.id }));
     return;

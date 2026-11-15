@@ -27,9 +27,9 @@ Step-by-step checklist. Listing text and permission justifications live in
 - [ ] If permissions, stored data or network behaviour changed since the last release, update
       [store-listing.md](store-listing.md), [privacy.md](privacy.md) (and its "Last updated" date) and the
       README permissions table. Check the manifest with:
-      ```sh
+      `sh
       grep -nE "permissions|host_permissions" manifest.config.ts
-      ```
+      `
 - [ ] Bump `version` in `package.json` (semver: `0.1.0` → `0.2.0` for features, `0.1.1` for fixes).
       The manifest reads it from there. The Web Store rejects an upload whose version is not higher
       than the published one.
@@ -38,11 +38,11 @@ Step-by-step checklist. Listing text and permission justifications live in
 ### 2. Tag and build the release zip
 
 - [ ] Tag the merged commit and push the tag (replace the version):
-      ```sh
+      `sh
       git checkout main && git pull
       git tag v0.2.0
       git push origin v0.2.0
-      ```
+      `
 - [ ] Wait for the **Release** workflow: it checks the tag matches `package.json`, runs typecheck and
       unit tests, runs `bun run package`, and creates a GitHub Release with
       `tab-herder-<version>.zip` attached.

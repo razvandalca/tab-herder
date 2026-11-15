@@ -20,7 +20,10 @@ async function withPendingMoves(tabIds: number[], moves: () => Promise<void>): P
 export async function sortTabsInGroup(groupId: number, key: TabSortKey): Promise<number> {
   const tabs = (await allTabs({ groupId })).sort((a, b) => a.index - b.index);
   const target = sortGroupTabs(tabs, groupId, key);
-  const skip = commonPrefix(tabs.map((t) => t.id), target);
+  const skip = commonPrefix(
+    tabs.map((t) => t.id),
+    target,
+  );
   const moving = target.slice(skip);
   if (!moving.length) return 0;
   const start = tabs[0]!.index + skip;

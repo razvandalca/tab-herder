@@ -17,13 +17,22 @@ export async function snapshotGroup(groupId: number): Promise<SavedGroup> {
     title: g.title ?? '',
     color: g.color as SavedGroup['color'],
     collapsed: g.collapsed,
-    tabs: tabs.sort((a, b) => a.index - b.index).filter(savable).map(toSaved),
+    tabs: tabs
+      .sort((a, b) => a.index - b.index)
+      .filter(savable)
+      .map(toSaved),
   };
 }
 
 export async function saveWindowSession(windowId: number, name: string): Promise<Session> {
   const snap = await snapshotWindow(windowId);
-  return storeSession({ id: newId(), name: name.trim() || defaultName(), createdAt: Date.now(), kind: 'window', ...snap });
+  return storeSession({
+    id: newId(),
+    name: name.trim() || defaultName(),
+    createdAt: Date.now(),
+    kind: 'window',
+    ...snap,
+  });
 }
 
 export async function saveGroupSession(groupId: number, name?: string): Promise<Session> {

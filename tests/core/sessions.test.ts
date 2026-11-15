@@ -29,14 +29,30 @@ describe('buildClosedSessions', () => {
       tab({ id: 10, index: 1, url: 'https://b.com/1', groupId: 1, title: 'B1' }),
       tab({ id: 12, index: 0, url: 'https://loose.com' }),
     ];
-    const [s, ...rest] = buildClosedSessions(tabs, [group({ id: 1, title: 'Work', color: 'red', collapsed: true })], opts);
+    const [s, ...rest] = buildClosedSessions(
+      tabs,
+      [group({ id: 1, title: 'Work', color: 'red', collapsed: true })],
+      opts,
+    );
     expect(rest).toEqual([]);
-    expect(s).toMatchObject({ name: 'Closed: Work', kind: 'group', createdAt: 1000, autoSaved: true, windowId: 1, ungrouped: [] });
+    expect(s).toMatchObject({
+      name: 'Closed: Work',
+      kind: 'group',
+      createdAt: 1000,
+      autoSaved: true,
+      windowId: 1,
+      ungrouped: [],
+    });
     expect(s!.groups).toEqual([
-      { title: 'Work', color: 'red', collapsed: true, tabs: [
-        { url: 'https://b.com/1', title: 'B1', pinned: false, favIconUrl: undefined },
-        { url: 'https://b.com/2', title: 'https://b.com/2', pinned: false, favIconUrl: undefined },
-      ] },
+      {
+        title: 'Work',
+        color: 'red',
+        collapsed: true,
+        tabs: [
+          { url: 'https://b.com/1', title: 'B1', pinned: false, favIconUrl: undefined },
+          { url: 'https://b.com/2', title: 'https://b.com/2', pinned: false, favIconUrl: undefined },
+        ],
+      },
     ]);
   });
 
@@ -62,12 +78,22 @@ describe('buildClosedSessions', () => {
   });
 
   it('returns nothing when no group has reopenable tabs', () => {
-    expect(buildClosedSessions([tab({ url: 'chrome://newtab/', groupId: 1 })], [group({ id: 1, title: 'X' })], opts)).toEqual([]);
+    expect(
+      buildClosedSessions([tab({ url: 'chrome://newtab/', groupId: 1 })], [group({ id: 1, title: 'X' })], opts),
+    ).toEqual([]);
   });
 });
 
 describe('addClosedSessions', () => {
-  const s = (id: string, autoSaved?: boolean): Session => ({ id, name: id, createdAt: 0, kind: 'group', groups: [], ungrouped: [], autoSaved });
+  const s = (id: string, autoSaved?: boolean): Session => ({
+    id,
+    name: id,
+    createdAt: 0,
+    kind: 'group',
+    groups: [],
+    ungrouped: [],
+    autoSaved,
+  });
 
   it('prepends and caps only auto-saved sessions, keeping the newest', () => {
     const existing = [s('m1'), s('a1', true), s('m2'), s('a2', true)];

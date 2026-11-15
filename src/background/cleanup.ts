@@ -35,7 +35,14 @@ export async function runCleanup(opts: { force?: boolean } = {}): Promise<Cleanu
   const eligible = tabs.filter((t) => !t.incognito || settings.includeIncognito);
   const now = Date.now();
 
-  const base = { tabs: eligible, groups, settings, now, lastActive: session.lastActive, groupLastActive: session.groupLastActive };
+  const base = {
+    tabs: eligible,
+    groups,
+    settings,
+    now,
+    lastActive: session.lastActive,
+    groupLastActive: session.groupLastActive,
+  };
   let plan = planCleanup(base);
 
   if (settings.cleanup.detectUnsavedForms && (await hasContentPermission())) {
@@ -63,7 +70,11 @@ export async function closeDuplicatesNow(): Promise<number> {
     const t = byId.get(id)!;
     return !(t.pinned || t.audible || (t.incognito && !settings.includeIncognito));
   });
-  return closeTabs(tabs, groups, ids.map((tabId) => ({ tabId, reason: 'duplicate' as const })));
+  return closeTabs(
+    tabs,
+    groups,
+    ids.map((tabId) => ({ tabId, reason: 'duplicate' as const })),
+  );
 }
 
 /** Saves the tabs to "recently cleaned", bumps stats, then closes them. */
@@ -128,7 +139,8 @@ export async function restoreCleaned(id: string): Promise<void> {
       await quietly(chrome.tabs.group({ tabIds: [tab.id], groupId: target.id }));
     } else if (entry.groupColor) {
       const gid = await quietly(chrome.tabs.group({ tabIds: [tab.id], createProperties: { windowId } }));
-      if (gid !== undefined) await quietly(chrome.tabGroups.update(gid, { title: entry.groupTitle, color: entry.groupColor }));
+      if (gid !== undefined)
+        await quietly(chrome.tabGroups.update(gid, { title: entry.groupTitle, color: entry.groupColor }));
     }
   }
   await patchLocal((l) => {

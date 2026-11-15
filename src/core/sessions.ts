@@ -6,7 +6,12 @@ export function isSavable(t: Pick<TabSnapshot, 'url'>): boolean {
   return /^(https?|ftp|file):/.test(t.url);
 }
 
-export const toSavedTab = (t: TabSnapshot): SavedTab => ({ url: t.url, title: t.title, pinned: t.pinned, favIconUrl: t.favIconUrl });
+export const toSavedTab = (t: TabSnapshot): SavedTab => ({
+  url: t.url,
+  title: t.title,
+  pinned: t.pinned,
+  favIconUrl: t.favIconUrl,
+});
 
 /** Short label for a set of groups, e.g. "Work, News +2". */
 export function groupsLabel(groups: Array<Pick<SavedGroup, 'title'>>, shown = 2): string {

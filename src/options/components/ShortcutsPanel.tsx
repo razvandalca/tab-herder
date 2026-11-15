@@ -10,7 +10,12 @@ export function ShortcutsPanel() {
       <div class="card">
         <h2>Keyboard shortcuts</h2>
         <table class="table">
-          <thead><tr><th>Action</th><th>Shortcut</th></tr></thead>
+          <thead>
+            <tr>
+              <th>Action</th>
+              <th>Shortcut</th>
+            </tr>
+          </thead>
           <tbody>
             {commands.map((c) => (
               <tr key={c.name}>
@@ -21,12 +26,25 @@ export function ShortcutsPanel() {
           </tbody>
         </table>
         <div class="hint">
-          Change them at <a href="#" onClick={(e) => { e.preventDefault(); void chrome.tabs.create({ url: 'chrome://extensions/shortcuts' }); }}>chrome://extensions/shortcuts</a>.
+          Change them at{' '}
+          <a
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              void chrome.tabs.create({ url: 'chrome://extensions/shortcuts' });
+            }}
+          >
+            chrome://extensions/shortcuts
+          </a>
+          .
         </div>
       </div>
       <div class="card">
         <h2>Right-click menu</h2>
-        <div class="hint">Right-click any page or the toolbar icon and open the “Tab Herder” submenu for group actions, duplicates and cleanup.</div>
+        <div class="hint">
+          Right-click any page or the toolbar icon and open the “Tab Herder” submenu for group actions, duplicates and
+          cleanup.
+        </div>
       </div>
     </section>
   );

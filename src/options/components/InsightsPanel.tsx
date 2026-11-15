@@ -1,7 +1,14 @@
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import {
-  INSIGHTS_RETENTION_DAYS, bandPath, linePath, niceMax, normalizeInsights, summarize, xAt,
-  type DayPoint, type InsightsData,
+  INSIGHTS_RETENTION_DAYS,
+  bandPath,
+  linePath,
+  niceMax,
+  normalizeInsights,
+  summarize,
+  xAt,
+  type DayPoint,
+  type InsightsData,
 } from '@/core/insights';
 import { send } from '@/shared/messages';
 import type { LocalState } from '@/shared/types';
@@ -61,7 +68,9 @@ export function InsightsPanel({ local, notify, fail }: Props) {
     }
   };
   const togglePaused = (paused: boolean) =>
-    send({ type: 'setInsightsPaused', paused }).then(() => notify(paused ? 'Collection paused' : 'Collection resumed')).catch(fail);
+    send({ type: 'setInsightsPaused', paused })
+      .then(() => notify(paused ? 'Collection paused' : 'Collection resumed'))
+      .catch(fail);
 
   const empty = summary.totals.samples === 0;
 
@@ -72,23 +81,35 @@ export function InsightsPanel({ local, notify, fail }: Props) {
           <h2>Insights</h2>
           <div class="row" role="group" aria-label="Time range">
             {RANGES.map((r) => (
-              <button type="button" key={r} class={`btn sm${range === r ? ' primary' : ''}`} aria-pressed={range === r} onClick={() => setRange(r)}>
+              <button
+                type="button"
+                key={r}
+                class={`btn sm${range === r ? ' primary' : ''}`}
+                aria-pressed={range === r}
+                onClick={() => setRange(r)}
+              >
                 {r} days
               </button>
             ))}
           </div>
         </div>
         <div class="hint">
-          Stored only on this device, in <code>chrome.storage.local</code>: daily open-tab counts, base domain names with
-          average tab counts, group titles with their largest size, and how many tabs cleanup closed or discarded. No URLs,
-          page titles or browsing history. Kept for {INSIGHTS_RETENTION_DAYS} days, never sent anywhere.
+          Stored only on this device, in <code>chrome.storage.local</code>: daily open-tab counts, base domain names
+          with average tab counts, group titles with their largest size, and how many tabs cleanup closed or discarded.
+          No URLs, page titles or browsing history. Kept for {INSIGHTS_RETENTION_DAYS} days, never sent anywhere.
         </div>
         <div class="row between">
           <label class="check">
-            <input type="checkbox" checked={!data.paused} onChange={(e) => void togglePaused(!(e.target as HTMLInputElement).checked)} />
+            <input
+              type="checkbox"
+              checked={!data.paused}
+              onChange={(e) => void togglePaused(!(e.target as HTMLInputElement).checked)}
+            />
             <span class="title">Collect insights</span>
           </label>
-          <button type="button" class="btn sm danger" onClick={() => void clear()}>Clear insights data</button>
+          <button type="button" class="btn sm danger" onClick={() => void clear()}>
+            Clear insights data
+          </button>
         </div>
       </div>
 
@@ -96,7 +117,9 @@ export function InsightsPanel({ local, notify, fail }: Props) {
         <h2>Open tabs</h2>
         {empty ? (
           <div class="muted">
-            {data.paused ? 'Collection is paused.' : 'No samples yet. Tab Herder records the open-tab count at most every 10 minutes while Chrome is running.'}
+            {data.paused
+              ? 'Collection is paused.'
+              : 'No samples yet. Tab Herder records the open-tab count at most every 10 minutes while Chrome is running.'}
           </div>
         ) : (
           <TabsChart days={summary.days} />
@@ -107,8 +130,14 @@ export function InsightsPanel({ local, notify, fail }: Props) {
         <div class="row between">
           <h2>Cleanup</h2>
           <div class="row small muted">
-            <span class="legend"><i style="background: var(--chart-1)" />Closed {summary.totals.closed}</span>
-            <span class="legend"><i style="background: var(--chart-2)" />Discarded {summary.totals.discarded}</span>
+            <span class="legend">
+              <i style="background: var(--chart-1)" />
+              Closed {summary.totals.closed}
+            </span>
+            <span class="legend">
+              <i style="background: var(--chart-2)" />
+              Discarded {summary.totals.discarded}
+            </span>
           </div>
         </div>
         <CleanupChart days={summary.days} />
@@ -148,12 +177,22 @@ function Axes({ max, days }: { max: number; days: DayPoint[] }) {
         return (
           <g key={v}>
             <line x1={PAD.l} x2={W - PAD.r} y1={y} y2={y} />
-            <text x={PAD.l - 6} y={y + 4} text-anchor="end">{fmt(v)}</text>
+            <text x={PAD.l - 6} y={y + 4} text-anchor="end">
+              {fmt(v)}
+            </text>
           </g>
         );
       })}
-      {first && <text x={PAD.l} y={H - 6}>{fmtDay(first.key)}</text>}
-      {last && <text x={W - PAD.r} y={H - 6} text-anchor="end">{fmtDay(last.key)}</text>}
+      {first && (
+        <text x={PAD.l} y={H - 6}>
+          {fmtDay(first.key)}
+        </text>
+      )}
+      {last && (
+        <text x={W - PAD.r} y={H - 6} text-anchor="end">
+          {fmtDay(last.key)}
+        </text>
+      )}
     </g>
   );
 }
@@ -165,10 +204,23 @@ function TabsChart({ days }: { days: DayPoint[] }) {
   const step = IW / Math.max(1, n - 1);
   return (
     <figure class="chart">
-      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Open tabs per day: average line with daily minimum to maximum band">
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        role="img"
+        aria-label="Open tabs per day: average line with daily minimum to maximum band"
+      >
         <Axes max={max} days={days} />
         <g transform={`translate(${PAD.l},${PAD.t})`}>
-          <path class="band" d={bandPath(days.map((d) => d.min), days.map((d) => d.max), IW, IH, max)} />
+          <path
+            class="band"
+            d={bandPath(
+              days.map((d) => d.min),
+              days.map((d) => d.max),
+              IW,
+              IH,
+              max,
+            )}
+          />
           <path class="line" d={linePath(avg, IW, IH, max)} />
           {days.map((d, i) =>
             d.avg === null ? null : (
@@ -210,8 +262,26 @@ function CleanupChart({ days }: { days: DayPoint[] }) {
             return (
               <g key={d.key} class="hit">
                 <rect class="ghost" x={i * slot} y={0} width={slot} height={IH} />
-                {hc > 0 && <rect x={x} y={IH - hc} width={bw} height={hc} rx={Math.min(2, bw / 2)} style="fill: var(--chart-1)" />}
-                {hd > 0 && <rect x={x} y={IH - hc - gap - hd} width={bw} height={hd} rx={Math.min(2, bw / 2)} style="fill: var(--chart-2)" />}
+                {hc > 0 && (
+                  <rect
+                    x={x}
+                    y={IH - hc}
+                    width={bw}
+                    height={hc}
+                    rx={Math.min(2, bw / 2)}
+                    style="fill: var(--chart-1)"
+                  />
+                )}
+                {hd > 0 && (
+                  <rect
+                    x={x}
+                    y={IH - hc - gap - hd}
+                    width={bw}
+                    height={hd}
+                    rx={Math.min(2, bw / 2)}
+                    style="fill: var(--chart-2)"
+                  />
+                )}
                 <title>{`${fmtDay(d.key)}: ${d.closed} closed, ${d.discarded} discarded`}</title>
               </g>
             );
@@ -231,13 +301,29 @@ function HBars({ rows, empty }: { rows: Array<[string, number]>; empty: string }
   const width = 360;
   const barW = width - labelW - valueW;
   return (
-    <svg class="hbars" viewBox={`0 0 ${width} ${rows.length * rowH}`} role="img" aria-label={rows.map(([l, v]) => `${l}: ${fmt(v)}`).join(', ')}>
+    <svg
+      class="hbars"
+      viewBox={`0 0 ${width} ${rows.length * rowH}`}
+      role="img"
+      aria-label={rows.map(([l, v]) => `${l}: ${fmt(v)}`).join(', ')}
+    >
       {rows.map(([label, v], i) => (
         <g key={label} transform={`translate(0,${i * rowH})`}>
           <title>{`${label}: ${fmt(v)}`}</title>
-          <text x={0} y={15} class="label">{label.length > 20 ? `${label.slice(0, 19)}…` : label}</text>
-          <rect x={labelW} y={5} width={Math.max(2, (v / max) * barW)} height={12} rx={2} style="fill: var(--chart-1)" />
-          <text x={width} y={15} text-anchor="end" class="value">{fmt(v)}</text>
+          <text x={0} y={15} class="label">
+            {label.length > 20 ? `${label.slice(0, 19)}…` : label}
+          </text>
+          <rect
+            x={labelW}
+            y={5}
+            width={Math.max(2, (v / max) * barW)}
+            height={12}
+            rx={2}
+            style="fill: var(--chart-1)"
+          />
+          <text x={width} y={15} text-anchor="end" class="value">
+            {fmt(v)}
+          </text>
         </g>
       ))}
     </svg>

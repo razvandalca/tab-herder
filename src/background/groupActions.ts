@@ -29,7 +29,8 @@ export async function closeTabsDiscardingGroups(tabs: Array<{ id: number; window
  */
 export async function closeGroup(groupId: number, record = true): Promise<CloseResult> {
   const tabs = await allTabs({ groupId });
-  const undo = record && tabs.length ? await recordClosedGroups(tabs, await allGroups({ windowId: tabs[0]!.windowId })) : [];
+  const undo =
+    record && tabs.length ? await recordClosedGroups(tabs, await allGroups({ windowId: tabs[0]!.windowId })) : [];
   await closeTabsDiscardingGroups(tabs);
   return { closed: tabs.length, undo };
 }

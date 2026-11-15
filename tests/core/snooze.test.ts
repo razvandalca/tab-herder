@@ -1,7 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import {
-  SNOOZE_PRESETS, describeWake, dueItems, nextWakeTime, parseLocalDateTime, presetWakeTime, snoozedLabel, sortSnoozed,
-  toLocalDateTimeValue, validateWakeTime, type SnoozedItem,
+  SNOOZE_PRESETS,
+  describeWake,
+  dueItems,
+  nextWakeTime,
+  parseLocalDateTime,
+  presetWakeTime,
+  snoozedLabel,
+  sortSnoozed,
+  toLocalDateTimeValue,
+  validateWakeTime,
+  type SnoozedItem,
 } from '@/core/snooze';
 
 // Local-time constructor so the tests pass in any time zone.
@@ -110,9 +119,23 @@ describe('describeWake', () => {
 
 describe('snoozedLabel', () => {
   it('names groups with their tab count and tabs by title or url', () => {
-    const tabs = [{ url: 'https://a.com/', title: 'A', pinned: false }, { url: 'https://b.com/', title: '', pinned: false }];
-    expect(snoozedLabel(item({ wakeAt: 1, kind: 'group', group: { title: 'Work', color: 'blue', collapsed: false }, tabs }))).toBe('Work (2 tabs)');
-    expect(snoozedLabel(item({ wakeAt: 1, kind: 'group', group: { title: '', color: 'blue', collapsed: false }, tabs: tabs.slice(0, 1) }))).toBe('Untitled group (1 tab)');
+    const tabs = [
+      { url: 'https://a.com/', title: 'A', pinned: false },
+      { url: 'https://b.com/', title: '', pinned: false },
+    ];
+    expect(
+      snoozedLabel(item({ wakeAt: 1, kind: 'group', group: { title: 'Work', color: 'blue', collapsed: false }, tabs })),
+    ).toBe('Work (2 tabs)');
+    expect(
+      snoozedLabel(
+        item({
+          wakeAt: 1,
+          kind: 'group',
+          group: { title: '', color: 'blue', collapsed: false },
+          tabs: tabs.slice(0, 1),
+        }),
+      ),
+    ).toBe('Untitled group (1 tab)');
     expect(snoozedLabel(item({ wakeAt: 1 }))).toBe('A');
     expect(snoozedLabel(item({ wakeAt: 1, tabs: tabs.slice(1) }))).toBe('https://b.com/');
     expect(snoozedLabel(item({ wakeAt: 1, tabs: [] }))).toBe('Empty');

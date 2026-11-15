@@ -1,7 +1,15 @@
 import type { GroupColor } from '@/shared/types';
 
 export const GROUP_COLORS: GroupColor[] = [
-  'grey', 'blue', 'red', 'yellow', 'green', 'pink', 'purple', 'cyan', 'orange',
+  'grey',
+  'blue',
+  'red',
+  'yellow',
+  'green',
+  'pink',
+  'purple',
+  'cyan',
+  'orange',
 ];
 
 /** Colours used for automatically named groups (grey is reserved for "unspecified"). */

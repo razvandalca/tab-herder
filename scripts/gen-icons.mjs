@@ -28,13 +28,20 @@ function png(size, pixel) {
     for (let x = 0; x < size; x++) {
       const [r, g, b, a] = pixel(x, y);
       const o = y * (size * 4 + 1) + 1 + x * 4;
-      raw[o] = r; raw[o + 1] = g; raw[o + 2] = b; raw[o + 3] = a;
+      raw[o] = r;
+      raw[o + 1] = g;
+      raw[o + 2] = b;
+      raw[o + 3] = a;
     }
   }
   const ihdr = Buffer.alloc(13);
   ihdr.writeUInt32BE(size, 0);
   ihdr.writeUInt32BE(size, 4);
-  ihdr[8] = 8; ihdr[9] = 6; ihdr[10] = 0; ihdr[11] = 0; ihdr[12] = 0;
+  ihdr[8] = 8;
+  ihdr[9] = 6;
+  ihdr[10] = 0;
+  ihdr[11] = 0;
+  ihdr[12] = 0;
   return Buffer.concat([
     Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
     chunk('IHDR', ihdr),
@@ -46,7 +53,11 @@ function png(size, pixel) {
 function draw(size) {
   const r = size * 0.22;
   const bg = [37, 99, 235];
-  const bars = [[96, 165, 250], [52, 211, 153], [251, 191, 36]];
+  const bars = [
+    [96, 165, 250],
+    [52, 211, 153],
+    [251, 191, 36],
+  ];
   return (x, y) => {
     const cx = Math.min(Math.max(x + 0.5, r), size - r);
     const cy = Math.min(Math.max(y + 0.5, r), size - r);
@@ -74,5 +85,8 @@ for (const s of [16, 32, 48, 128]) {
 // Chrome Web Store listing icon: 128 px canvas with 96 px artwork and 16 px transparent padding.
 mkdirSync('release', { recursive: true });
 const inner = draw(96);
-writeFileSync('release/store-icon-128.png', png(128, (x, y) => (x < 16 || y < 16 || x >= 112 || y >= 112) ? [0, 0, 0, 0] : inner(x - 16, y - 16)));
+writeFileSync(
+  'release/store-icon-128.png',
+  png(128, (x, y) => (x < 16 || y < 16 || x >= 112 || y >= 112 ? [0, 0, 0, 0] : inner(x - 16, y - 16))),
+);
 console.log('wrote release/store-icon-128.png');

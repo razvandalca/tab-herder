@@ -24,7 +24,11 @@ export function ProfileSwitcher({ notify }: { notify: (msg: string) => void }) {
       value={settings.activeProfileId}
       onChange={(e) => void change((e.target as HTMLSelectElement).value)}
     >
-      {settings.profiles.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+      {settings.profiles.map((p) => (
+        <option key={p.id} value={p.id}>
+          {p.name}
+        </option>
+      ))}
     </select>
   );
 }

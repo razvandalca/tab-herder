@@ -1,7 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import {
-  CHUNK_MAX_BYTES, chunkKey, chunkRules, createProfile, decodeProfiles, deleteProfile, duplicateProfile, encodeSync,
-  mergeImportedSettings, normalizeProfiles, profileRules, renameProfile, sanitizeRules, setProfileRules, switchProfile,
+  CHUNK_MAX_BYTES,
+  chunkKey,
+  chunkRules,
+  createProfile,
+  decodeProfiles,
+  deleteProfile,
+  duplicateProfile,
+  encodeSync,
+  mergeImportedSettings,
+  normalizeProfiles,
+  profileRules,
+  renameProfile,
+  sanitizeRules,
+  setProfileRules,
+  switchProfile,
   uniqueProfileName,
 } from '@/core/profiles';
 import { DEFAULT_SETTINGS } from '@/shared/defaults';
@@ -17,7 +30,10 @@ let counter = 0;
 const ids = () => `id${++counter}`;
 
 /** Simulates a chrome.storage.sync round trip: encode, then decode the stored items. */
-function roundTrip(s: Settings, existing: Record<string, unknown> = {}): { stored: Record<string, unknown>; back: Settings } {
+function roundTrip(
+  s: Settings,
+  existing: Record<string, unknown> = {},
+): { stored: Record<string, unknown>; back: Settings } {
   const { items, remove } = encodeSync(s, Object.keys(existing));
   const stored = { ...existing, ...items };
   for (const k of remove) delete stored[k];
@@ -46,13 +62,26 @@ describe('decodeProfiles (migration)', () => {
   });
 
   it('handles a fresh install with nothing stored', () => {
-    expect(decodeProfiles({})).toEqual({ rules: [], profiles: [{ id: 'default', name: 'Default', rules: [] }], activeProfileId: 'default' });
+    expect(decodeProfiles({})).toEqual({
+      rules: [],
+      profiles: [{ id: 'default', name: 'Default', rules: [] }],
+      activeProfileId: 'default',
+    });
   });
 
   it('ignores malformed index entries and duplicate ids, falls back to the first profile if active is unknown', () => {
     const raw = {
       rules: [dev],
-      profiles: { activeId: 'gone', list: [{ id: 'a', name: 'A', chunks: 0 }, null, { id: '', name: 'x' }, { id: 'b', name: 'B', chunks: 2 }, { id: 'a', name: 'dup' }] },
+      profiles: {
+        activeId: 'gone',
+        list: [
+          { id: 'a', name: 'A', chunks: 0 },
+          null,
+          { id: '', name: 'x' },
+          { id: 'b', name: 'B', chunks: 2 },
+          { id: 'a', name: 'dup' },
+        ],
+      },
       [chunkKey('b', 0)]: [mail],
       // chunk 1 missing (e.g. not yet synced): skipped, not fatal
     };
@@ -64,9 +93,13 @@ describe('decodeProfiles (migration)', () => {
   });
 
   it('treats an index without a usable list as pre-profile data', () => {
-    expect(decodeProfiles({ rules: [dev], profiles: { activeId: 'x', list: 'nope' } }).profiles).toEqual([{ id: 'default', name: 'Default', rules: [dev] }]);
+    expect(decodeProfiles({ rules: [dev], profiles: { activeId: 'x', list: 'nope' } }).profiles).toEqual([
+      { id: 'default', name: 'Default', rules: [dev] },
+    ]);
     expect(decodeProfiles({ rules: 'bad', profiles: { list: [{ id: 'p', name: 'P', chunks: 'x' }] } })).toEqual({
-      rules: [], profiles: [{ id: 'p', name: 'P', rules: [] }], activeProfileId: 'p',
+      rules: [],
+      profiles: [{ id: 'p', name: 'P', rules: [] }],
+      activeProfileId: 'p',
     });
   });
 });
@@ -75,7 +108,13 @@ describe('encodeSync / storage layout', () => {
   it('keeps the active profile in `rules` and other profiles in chunk keys', () => {
     const { items } = encodeSync(twoProfiles());
     expect(items.rules).toEqual([dev]);
-    expect(items.profiles).toEqual({ activeId: 'work', list: [{ id: 'work', name: 'Work', chunks: 0 }, { id: 'home', name: 'Personal', chunks: 1 }] });
+    expect(items.profiles).toEqual({
+      activeId: 'work',
+      list: [
+        { id: 'work', name: 'Work', chunks: 0 },
+        { id: 'home', name: 'Personal', chunks: 1 },
+      ],
+    });
     expect(items[chunkKey('home', 0)]).toEqual([mail, news]);
     expect(items.settings).not.toHaveProperty('rules');
     expect(items.settings).not.toHaveProperty('profiles');
@@ -105,7 +144,14 @@ describe('encodeSync / storage layout', () => {
   });
 
   it('splits big profiles so every item fits the 8 KB sync quota', () => {
-    const many: Rule[] = Array.from({ length: 300 }, (_, i) => rule({ id: `r${i}`, name: `Group ${i}`, matchType: 'regex', pattern: `^https://host-${i}\\.example\\.com/(a|b|c)/.*$` }));
+    const many: Rule[] = Array.from({ length: 300 }, (_, i) =>
+      rule({
+        id: `r${i}`,
+        name: `Group ${i}`,
+        matchType: 'regex',
+        pattern: `^https://host-${i}\\.example\\.com/(a|b|c)/.*$`,
+      }),
+    );
     const s = createProfile(settings(), 'Big', 'big', many);
     const { items } = encodeSync(s);
     const index = items.profiles as { list: Array<{ id: string; chunks: number }> };
@@ -197,11 +243,22 @@ describe('profile operations', () => {
 });
 
 describe('import (mergeImportedSettings)', () => {
-  const apply = (current: Settings, file: { version: number; settings: Record<string, unknown> }, mode: 'replace' | 'append') =>
-    mergeImportedSettings(current, withDefaults<Settings>(file.settings, DEFAULT_SETTINGS), file, mode, ids);
+  const apply = (
+    current: Settings,
+    file: { version: number; settings: Record<string, unknown> },
+    mode: 'replace' | 'append',
+  ) => mergeImportedSettings(current, withDefaults<Settings>(file.settings, DEFAULT_SETTINGS), file, mode, ids);
 
   it('sanitizes rules', () => {
-    const out = sanitizeRules([{ name: 'A', pattern: 'a.com', matchType: 'domain' }, { name: 1 }, null, { id: 'k', name: 'B', pattern: 'b', matchType: 'title', enabled: false, color: 'red' }], ids);
+    const out = sanitizeRules(
+      [
+        { name: 'A', pattern: 'a.com', matchType: 'domain' },
+        { name: 1 },
+        null,
+        { id: 'k', name: 'B', pattern: 'b', matchType: 'title', enabled: false, color: 'red' },
+      ],
+      ids,
+    );
     expect(out).toHaveLength(2);
     expect(out[0]).toMatchObject({ enabled: true, color: 'auto' });
     expect(out[0]!.id).toBeTruthy();
@@ -232,21 +289,40 @@ describe('import (mergeImportedSettings)', () => {
     expect(out.settings.profiles.map((p) => p.name)).toEqual(['Work', 'Personal']);
   });
 
-  it('prefers settings.rules for the file\'s active profile and falls back to the first profile', () => {
-    const file = { version: 2, settings: { rules: [news], activeProfileId: 'work', profiles: [{ id: 'work', name: 'Work', rules: [dev] }] } };
+  it("prefers settings.rules for the file's active profile and falls back to the first profile", () => {
+    const file = {
+      version: 2,
+      settings: { rules: [news], activeProfileId: 'work', profiles: [{ id: 'work', name: 'Work', rules: [dev] }] },
+    };
     expect(apply(settings(), file, 'replace').settings.rules).toEqual([news]);
-    const noActive = { version: 2, settings: { profiles: [{ id: 'x', name: 'X', rules: [dev] }, { id: 'y', name: 'Y' }, { bad: true }] } };
+    const noActive = {
+      version: 2,
+      settings: { profiles: [{ id: 'x', name: 'X', rules: [dev] }, { id: 'y', name: 'Y' }, { bad: true }] },
+    };
     const out = apply(settings(), noActive, 'replace');
     expect(out.settings.activeProfileId).toBe('x');
     expect(out.settings.profiles.map((p) => p.id)).toEqual(['x', 'y']);
   });
 
   it('reads version 2 files with profiles (append)', () => {
-    const file = { version: 2, settings: { activeProfileId: 'home', rules: [news], profiles: [
-      { id: 'home', name: 'Personal', rules: [news] },
-      { id: 'fresh', name: 'Work', rules: [mail] },
-    ] } };
-    const current = { ...twoProfiles(), profiles: [{ id: 'work', name: 'Work', rules: [dev] }, { id: 'home', name: 'Personal', rules: [mail] }] };
+    const file = {
+      version: 2,
+      settings: {
+        activeProfileId: 'home',
+        rules: [news],
+        profiles: [
+          { id: 'home', name: 'Personal', rules: [news] },
+          { id: 'fresh', name: 'Work', rules: [mail] },
+        ],
+      },
+    };
+    const current = {
+      ...twoProfiles(),
+      profiles: [
+        { id: 'work', name: 'Work', rules: [dev] },
+        { id: 'home', name: 'Personal', rules: [mail] },
+      ],
+    };
     const out = apply(current, file, 'append');
     expect(out.rules).toBe(2);
     expect(out.settings.activeProfileId).toBe('work');

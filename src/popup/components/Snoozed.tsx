@@ -29,22 +29,23 @@ export function Snoozed({ run, currentTab }: { run: Runner; currentTab?: TabSnap
 
   return (
     <div class="stack">
-      {snoozable(currentTab) && (
-        picking ? (
+      {snoozable(currentTab) &&
+        (picking ? (
           <SnoozePicker
             label="this tab"
             onCancel={() => setPicking(false)}
             onPick={(wakeAt) => {
               setPicking(false);
-              void run(`Snoozed until ${describeWake(wakeAt, Date.now())}`, () => send({ type: 'snoozeTab', tabId: currentTab!.id, wakeAt }));
+              void run(`Snoozed until ${describeWake(wakeAt, Date.now())}`, () =>
+                send({ type: 'snoozeTab', tabId: currentTab!.id, wakeAt }),
+              );
             }}
           />
         ) : (
           <button type="button" class="btn sm" style="align-self: flex-start" onClick={() => setPicking(true)}>
             Snooze this tab…
           </button>
-        )
-      )}
+        ))}
       {items.length > 0 && (
         <details open>
           <summary class="section-head">
@@ -54,14 +55,20 @@ export function Snoozed({ run, currentTab }: { run: Runner; currentTab?: TabSnap
           <div class="list" role="list" aria-label="Snoozed tabs and groups">
             {sortSnoozed(items).map((i) => (
               <div key={i.id} class="item" role="listitem" title={i.tabs.map((t) => t.url).join('\n')}>
-                {i.kind === 'group' && i.group
-                  ? <span class="dot" style={{ background: COLOR_HEX[i.group.color] }} />
-                  : <Favicon src={i.tabs[0]?.favIconUrl} />}
+                {i.kind === 'group' && i.group ? (
+                  <span class="dot" style={{ background: COLOR_HEX[i.group.color] }} />
+                ) : (
+                  <Favicon src={i.tabs[0]?.favIconUrl} />
+                )}
                 <div class="grow">
                   <div class="ellipsis">{snoozedLabel(i)}</div>
                   <div class="small muted ellipsis">{describeWake(i.wakeAt, now)}</div>
                 </div>
-                <button type="button" class="btn sm" onClick={() => run('Woken', () => send({ type: 'wakeSnoozed', id: i.id }))}>
+                <button
+                  type="button"
+                  class="btn sm"
+                  onClick={() => run('Woken', () => send({ type: 'wakeSnoozed', id: i.id }))}
+                >
                   <Icons.restore /> Wake now
                 </button>
                 <button

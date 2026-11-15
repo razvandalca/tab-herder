@@ -12,7 +12,12 @@ import { CHUNK_PREFIX, decodeProfiles, encodeSync } from '@/core/profiles';
  *   chrome.storage.session: { managedGroups, overrides, pendingMoves, lastActive, groupLastActive }
  */
 
-export const DEFAULT_LOCAL: LocalState = { sessions: [], autosaves: [], recentlyCleaned: [], stats: { cleanedByDay: {}, discardedByDay: {} } };
+export const DEFAULT_LOCAL: LocalState = {
+  sessions: [],
+  autosaves: [],
+  recentlyCleaned: [],
+  stats: { cleanedByDay: {}, discardedByDay: {} },
+};
 export const DEFAULT_SESSION: SessionState = {
   managedGroups: {},
   overrides: {},
@@ -50,7 +55,9 @@ export async function saveSettings(settings: Settings): Promise<void> {
   const raw = await chrome.storage.sync.get(null);
   const { items, remove } = encodeSync(settings, Object.keys(raw));
   // Only write what changed, to stay well inside the sync write-rate quotas.
-  const changed = Object.fromEntries(Object.entries(items).filter(([k, v]) => JSON.stringify(raw[k]) !== JSON.stringify(v)));
+  const changed = Object.fromEntries(
+    Object.entries(items).filter(([k, v]) => JSON.stringify(raw[k]) !== JSON.stringify(v)),
+  );
   if (Object.keys(changed).length) await chrome.storage.sync.set(changed);
   if (remove.length) await chrome.storage.sync.remove(remove);
 }

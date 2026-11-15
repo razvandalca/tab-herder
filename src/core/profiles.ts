@@ -68,13 +68,19 @@ export function chunkRules(rules: Rule[], maxBytes = CHUNK_MAX_BYTES): Rule[][] 
 export function decodeProfiles(raw: Record<string, unknown>): ProfileState {
   const rules = Array.isArray(raw.rules) ? (raw.rules as Rule[]) : [];
   const index = raw.profiles;
-  const list = isObject(index) && Array.isArray(index.list)
-    ? (index.list as unknown[]).filter(
-        (e): e is ProfileIndexEntry => isObject(e) && typeof e.id === 'string' && e.id !== '' && typeof e.name === 'string',
-      )
-    : [];
+  const list =
+    isObject(index) && Array.isArray(index.list)
+      ? (index.list as unknown[]).filter(
+          (e): e is ProfileIndexEntry =>
+            isObject(e) && typeof e.id === 'string' && e.id !== '' && typeof e.name === 'string',
+        )
+      : [];
   if (!list.length) {
-    return { rules, profiles: [{ id: DEFAULT_PROFILE_ID, name: DEFAULT_PROFILE_NAME, rules }], activeProfileId: DEFAULT_PROFILE_ID };
+    return {
+      rules,
+      profiles: [{ id: DEFAULT_PROFILE_ID, name: DEFAULT_PROFILE_NAME, rules }],
+      activeProfileId: DEFAULT_PROFILE_ID,
+    };
   }
   const wanted = isObject(index) && typeof index.activeId === 'string' ? index.activeId : '';
   const activeProfileId = list.some((e) => e.id === wanted) ? wanted : list[0]!.id;
@@ -102,7 +108,9 @@ export function decodeProfiles(raw: Record<string, unknown>): ProfileState {
 export function normalizeProfiles(settings: Settings): Settings {
   let profiles = Array.isArray(settings.profiles) ? settings.profiles.filter((p) => p && typeof p.id === 'string') : [];
   if (!profiles.length) profiles = [{ id: DEFAULT_PROFILE_ID, name: DEFAULT_PROFILE_NAME, rules: settings.rules }];
-  const activeProfileId = profiles.some((p) => p.id === settings.activeProfileId) ? settings.activeProfileId : profiles[0]!.id;
+  const activeProfileId = profiles.some((p) => p.id === settings.activeProfileId)
+    ? settings.activeProfileId
+    : profiles[0]!.id;
   return {
     ...settings,
     activeProfileId,
@@ -111,7 +119,10 @@ export function normalizeProfiles(settings: Settings): Settings {
 }
 
 /** Everything that goes into chrome.storage.sync for these settings, plus stale chunk keys to remove. */
-export function encodeSync(settings: Settings, existingKeys: string[] = []): { items: Record<string, unknown>; remove: string[] } {
+export function encodeSync(
+  settings: Settings,
+  existingKeys: string[] = [],
+): { items: Record<string, unknown>; remove: string[] } {
   const s = normalizeProfiles(settings);
   const { rules, profiles, activeProfileId, ...rest } = s;
   const items: Record<string, unknown> = { settings: rest, rules };
@@ -178,11 +189,21 @@ export function renameProfile(settings: Settings, id: string, name: string): Set
 }
 
 /** Copies a profile's rules (with fresh rule ids) into a new profile. */
-export function duplicateProfile(settings: Settings, id: string, newProfileId: string, newRuleId: () => string): Settings {
+export function duplicateProfile(
+  settings: Settings,
+  id: string,
+  newProfileId: string,
+  newRuleId: () => string,
+): Settings {
   const s = normalizeProfiles(settings);
   const src = s.profiles.find((p) => p.id === id);
   if (!src) return s;
-  return createProfile(s, `${src.name} copy`, newProfileId, src.rules.map((r) => ({ ...r, id: newRuleId() })));
+  return createProfile(
+    s,
+    `${src.name} copy`,
+    newProfileId,
+    src.rules.map((r) => ({ ...r, id: newRuleId() })),
+  );
 }
 
 /** Deletes a profile; the last one cannot be deleted. Deleting the active one activates the first remaining. */
@@ -232,11 +253,15 @@ export function mergeImportedSettings(
 ): { settings: Settings; rules: number } {
   const base = normalizeProfiles(current);
   const { rules: _r, profiles: _p, activeProfileId: _a, ...rest } = incoming;
-  const fileProfiles = file.version >= 2 && Array.isArray(file.settings.profiles)
-    ? (file.settings.profiles as unknown[])
-        .filter((p): p is Record<string, unknown> => isObject(p) && typeof p.id === 'string' && p.id !== '' && typeof p.name === 'string')
-        .map((p) => ({ id: p.id as string, name: p.name as string, rules: sanitizeRules(p.rules, newRuleId) }))
-    : [];
+  const fileProfiles =
+    file.version >= 2 && Array.isArray(file.settings.profiles)
+      ? (file.settings.profiles as unknown[])
+          .filter(
+            (p): p is Record<string, unknown> =>
+              isObject(p) && typeof p.id === 'string' && p.id !== '' && typeof p.name === 'string',
+          )
+          .map((p) => ({ id: p.id as string, name: p.name as string, rules: sanitizeRules(p.rules, newRuleId) }))
+      : [];
 
   if (!fileProfiles.length) {
     const rules = sanitizeRules(file.settings.rules, newRuleId);
@@ -254,7 +279,16 @@ export function mergeImportedSettings(
 
   if (mode === 'replace') {
     const active = fileProfiles.find((p) => p.id === fileActive) ?? fileProfiles[0]!;
-    return { settings: normalizeProfiles({ ...base, ...rest, profiles: fileProfiles, activeProfileId: active.id, rules: active.rules }), rules: count };
+    return {
+      settings: normalizeProfiles({
+        ...base,
+        ...rest,
+        profiles: fileProfiles,
+        activeProfileId: active.id,
+        rules: active.rules,
+      }),
+      rules: count,
+    };
   }
 
   const profiles = base.profiles.map((p) => {
@@ -262,7 +296,8 @@ export function mergeImportedSettings(
     return match ? { ...p, rules: appendRules(p.rules, match.rules) } : p;
   });
   for (const f of fileProfiles) {
-    if (!profiles.some((p) => p.id === f.id)) profiles.push({ ...f, name: uniqueProfileName({ ...base, profiles }, f.name) });
+    if (!profiles.some((p) => p.id === f.id))
+      profiles.push({ ...f, name: uniqueProfileName({ ...base, profiles }, f.name) });
   }
   const activeRules = profiles.find((p) => p.id === base.activeProfileId)!.rules;
   return { settings: normalizeProfiles({ ...base, ...rest, profiles, rules: activeRules }), rules: count };

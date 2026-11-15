@@ -42,14 +42,20 @@ export function GroupRow({ group, tabs, run, otherWindow }: Props) {
   const submit = async (e: Event) => {
     e.preventDefault();
     if (editing === 'rename') await act('Renamed', () => send({ type: 'renameGroup', groupId: group.id, title: text }));
-    if (editing === 'save') await act('Saved and closed', () => send({ type: 'saveAndCloseGroup', groupId: group.id, name: text }));
+    if (editing === 'save')
+      await act('Saved and closed', () => send({ type: 'saveAndCloseGroup', groupId: group.id, name: text }));
     setEditing(null);
   };
 
   return (
     <div role="listitem">
       <div class="item group-row">
-        <button class="btn icon" aria-label={open ? 'Hide tabs' : 'Show tabs'} aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+        <button
+          class="btn icon"
+          aria-label={open ? 'Hide tabs' : 'Show tabs'}
+          aria-expanded={open}
+          onClick={() => setOpen((o) => !o)}
+        >
           <span class={`chev ${open ? 'open' : ''}`}>▸</span>
         </button>
         <span class="dot" style={{ background: COLOR_HEX[group.color] }} />
@@ -59,31 +65,103 @@ export function GroupRow({ group, tabs, run, otherWindow }: Props) {
         </div>
         <span class="badge">{tabs.length}</span>
         <div class="menu" ref={menuRef}>
-          <button class="btn icon" aria-label={`Actions for ${title}`} aria-haspopup="menu" aria-expanded={menu} onClick={() => setMenu((m) => !m)}>
+          <button
+            class="btn icon"
+            aria-label={`Actions for ${title}`}
+            aria-haspopup="menu"
+            aria-expanded={menu}
+            onClick={() => setMenu((m) => !m)}
+          >
             <Icons.more />
           </button>
           {menu && (
             <div class="menu-popup" role="menu">
-              <button role="menuitem" onClick={() => act(group.collapsed ? 'Expanded' : 'Collapsed', () => send({ type: 'setCollapsed', groupId: group.id, collapsed: !group.collapsed }))}>
+              <button
+                role="menuitem"
+                onClick={() =>
+                  act(group.collapsed ? 'Expanded' : 'Collapsed', () =>
+                    send({ type: 'setCollapsed', groupId: group.id, collapsed: !group.collapsed }),
+                  )
+                }
+              >
                 {group.collapsed ? 'Expand' : 'Collapse'}
               </button>
-              <button role="menuitem" onClick={() => { setMenu(false); setText(group.title); setEditing('rename'); }}>Rename…</button>
+              <button
+                role="menuitem"
+                onClick={() => {
+                  setMenu(false);
+                  setText(group.title);
+                  setEditing('rename');
+                }}
+              >
+                Rename…
+              </button>
               <div style="padding: 6px 10px">
-                <div class="small muted" style="margin-bottom: 4px">Colour</div>
-                <ColorPicker value={group.color} onChange={(c) => act('Recoloured', () => send({ type: 'recolorGroup', groupId: group.id, color: c as GroupColor }))} />
+                <div class="small muted" style="margin-bottom: 4px">
+                  Colour
+                </div>
+                <ColorPicker
+                  value={group.color}
+                  onChange={(c) =>
+                    act('Recoloured', () => send({ type: 'recolorGroup', groupId: group.id, color: c as GroupColor }))
+                  }
+                />
               </div>
               <hr />
-              <div class="small muted" style="padding: 4px 10px 0">Sort tabs</div>
+              <div class="small muted" style="padding: 4px 10px 0">
+                Sort tabs
+              </div>
               {(Object.entries(TAB_SORT_LABELS) as Array<[TabSortKey, string]>).map(([key, label]) => (
-                <button key={key} role="menuitem" onClick={() => act('Sorted', () => send({ type: 'sortGroupTabs', groupId: group.id, key }))}>{label}</button>
+                <button
+                  key={key}
+                  role="menuitem"
+                  onClick={() => act('Sorted', () => send({ type: 'sortGroupTabs', groupId: group.id, key }))}
+                >
+                  {label}
+                </button>
               ))}
               <hr />
-              <button role="menuitem" onClick={() => { setMenu(false); setText(group.title); setEditing('save'); }}>Save &amp; close…</button>
-              <button role="menuitem" onClick={() => { setMenu(false); setEditing('snooze'); }}>Snooze…</button>
-              <button role="menuitem" onClick={() => act('Moved to new window', () => send({ type: 'moveGroupToNewWindow', groupId: group.id }))}>Move to new window</button>
-              <button role="menuitem" onClick={() => act('Ungrouped', () => send({ type: 'ungroup', groupId: group.id }))}>Ungroup</button>
+              <button
+                role="menuitem"
+                onClick={() => {
+                  setMenu(false);
+                  setText(group.title);
+                  setEditing('save');
+                }}
+              >
+                Save &amp; close…
+              </button>
+              <button
+                role="menuitem"
+                onClick={() => {
+                  setMenu(false);
+                  setEditing('snooze');
+                }}
+              >
+                Snooze…
+              </button>
+              <button
+                role="menuitem"
+                onClick={() =>
+                  act('Moved to new window', () => send({ type: 'moveGroupToNewWindow', groupId: group.id }))
+                }
+              >
+                Move to new window
+              </button>
+              <button
+                role="menuitem"
+                onClick={() => act('Ungrouped', () => send({ type: 'ungroup', groupId: group.id }))}
+              >
+                Ungroup
+              </button>
               <hr />
-              <button role="menuitem" style="color: var(--danger)" onClick={() => act('Group closed', () => send({ type: 'closeGroup', groupId: group.id }))}>Close all tabs</button>
+              <button
+                role="menuitem"
+                style="color: var(--danger)"
+                onClick={() => act('Group closed', () => send({ type: 'closeGroup', groupId: group.id }))}
+              >
+                Close all tabs
+              </button>
             </div>
           )}
         </div>
@@ -95,21 +173,35 @@ export function GroupRow({ group, tabs, run, otherWindow }: Props) {
             onCancel={() => setEditing(null)}
             onPick={(wakeAt) => {
               setEditing(null);
-              void act(`Snoozed until ${describeWake(wakeAt, Date.now())}`, () => send({ type: 'snoozeGroup', groupId: group.id, wakeAt }));
+              void act(`Snoozed until ${describeWake(wakeAt, Date.now())}`, () =>
+                send({ type: 'snoozeGroup', groupId: group.id, wakeAt }),
+              );
             }}
           />
         </div>
       )}
       {editing && editing !== 'snooze' && (
         <form class="inline-form" onSubmit={submit}>
-          <input class="input sm grow" value={text} onInput={(e) => setText((e.target as HTMLInputElement).value)} placeholder={editing === 'rename' ? 'Group name' : 'Session name'} autoFocus />
-          <button class="btn sm primary" type="submit">{editing === 'rename' ? 'Rename' : 'Save & close'}</button>
-          <button class="btn sm" type="button" onClick={() => setEditing(null)}>Cancel</button>
+          <input
+            class="input sm grow"
+            value={text}
+            onInput={(e) => setText((e.target as HTMLInputElement).value)}
+            placeholder={editing === 'rename' ? 'Group name' : 'Session name'}
+            autoFocus
+          />
+          <button class="btn sm primary" type="submit">
+            {editing === 'rename' ? 'Rename' : 'Save & close'}
+          </button>
+          <button class="btn sm" type="button" onClick={() => setEditing(null)}>
+            Cancel
+          </button>
         </form>
       )}
       {open && (
         <div class="list tabs-in-group">
-          {tabs.map((t) => <TabRow key={t.id} tab={t} showWindow={otherWindow} />)}
+          {tabs.map((t) => (
+            <TabRow key={t.id} tab={t} showWindow={otherWindow} />
+          ))}
         </div>
       )}
     </div>

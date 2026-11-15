@@ -38,11 +38,21 @@ export function RuleForm({ rule, onSave, onCancel }: Props) {
       <div class="grid2">
         <label class="field">
           <span>Group name</span>
-          <input class="input" value={draft.name} onInput={(e) => update({ name: (e.target as HTMLInputElement).value })} placeholder="Dev" autoFocus />
+          <input
+            class="input"
+            value={draft.name}
+            onInput={(e) => update({ name: (e.target as HTMLInputElement).value })}
+            placeholder="Dev"
+            autoFocus
+          />
         </label>
         <label class="field">
           <span>Match type</span>
-          <select class="input" value={draft.matchType} onChange={(e) => update({ matchType: (e.target as HTMLSelectElement).value as MatchType })}>
+          <select
+            class="input"
+            value={draft.matchType}
+            onChange={(e) => update({ matchType: (e.target as HTMLSelectElement).value as MatchType })}
+          >
             <option value="domain">Domain</option>
             <option value="glob">URL glob</option>
             <option value="regex">URL regex</option>
@@ -52,7 +62,12 @@ export function RuleForm({ rule, onSave, onCancel }: Props) {
       </div>
       <label class="field">
         <span>Pattern</span>
-        <input class="input" value={draft.pattern} onInput={(e) => update({ pattern: (e.target as HTMLInputElement).value })} spellcheck={false} />
+        <input
+          class="input"
+          value={draft.pattern}
+          onInput={(e) => update({ pattern: (e.target as HTMLInputElement).value })}
+          spellcheck={false}
+        />
         <span class="hint">{TYPE_HINTS[draft.matchType]}</span>
       </label>
       <div class="grid2">
@@ -62,14 +77,26 @@ export function RuleForm({ rule, onSave, onCancel }: Props) {
         </div>
         <label class="field">
           <span>Auto-close group after (minutes of inactivity)</span>
-          <input class="input" type="number" min={0} value={draft.autoCloseMinutes ?? 0} onInput={(e) => update({ autoCloseMinutes: Math.max(0, Number((e.target as HTMLInputElement).value) || 0) })} />
+          <input
+            class="input"
+            type="number"
+            min={0}
+            value={draft.autoCloseMinutes ?? 0}
+            onInput={(e) =>
+              update({ autoCloseMinutes: Math.max(0, Number((e.target as HTMLInputElement).value) || 0) })
+            }
+          />
           <span class="hint">0 = never. Tabs are saved to “Recently cleaned” first.</span>
         </label>
       </div>
       {error && <div style="color: var(--danger)">{error}</div>}
       <div class="row">
-        <button class="btn primary" type="submit">{rule ? 'Save' : 'Add rule'}</button>
-        <button class="btn" type="button" onClick={onCancel}>Cancel</button>
+        <button class="btn primary" type="submit">
+          {rule ? 'Save' : 'Add rule'}
+        </button>
+        <button class="btn" type="button" onClick={onCancel}>
+          Cancel
+        </button>
       </div>
     </form>
   );

@@ -1,6 +1,11 @@
 import { useState } from 'preact/hooks';
 import {
-  SNOOZE_PRESETS, describeWake, parseLocalDateTime, presetWakeTime, toLocalDateTimeValue, validateWakeTime,
+  SNOOZE_PRESETS,
+  describeWake,
+  parseLocalDateTime,
+  presetWakeTime,
+  toLocalDateTimeValue,
+  validateWakeTime,
 } from '@/core/snooze';
 
 interface Props {
@@ -30,7 +35,13 @@ export function SnoozePicker({ label, onPick, onCancel }: Props) {
         {SNOOZE_PRESETS.map((p) => {
           const at = presetWakeTime(p.id, now);
           return (
-            <button key={p.id} type="button" class="btn sm" onClick={() => onPick(at)} title={new Date(at).toLocaleString()}>
+            <button
+              key={p.id}
+              type="button"
+              class="btn sm"
+              onClick={() => onPick(at)}
+              title={new Date(at).toLocaleString()}
+            >
               <span>{p.label}</span>
               <span class="small muted">{describeWake(at, now)}</span>
             </button>
@@ -44,12 +55,23 @@ export function SnoozePicker({ label, onPick, onCancel }: Props) {
           aria-label="Custom snooze time"
           value={custom}
           min={toLocalDateTimeValue(now)}
-          onInput={(e) => { setCustom((e.target as HTMLInputElement).value); setError(null); }}
+          onInput={(e) => {
+            setCustom((e.target as HTMLInputElement).value);
+            setError(null);
+          }}
         />
-        <button class="btn sm primary" type="submit">Snooze</button>
-        <button class="btn sm" type="button" onClick={onCancel}>Cancel</button>
+        <button class="btn sm primary" type="submit">
+          Snooze
+        </button>
+        <button class="btn sm" type="button" onClick={onCancel}>
+          Cancel
+        </button>
       </form>
-      {error && <div class="small" style="color: var(--danger)" role="alert">{error}</div>}
+      {error && (
+        <div class="small" style="color: var(--danger)" role="alert">
+          {error}
+        </div>
+      )}
     </div>
   );
 }
