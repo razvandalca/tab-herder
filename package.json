@@ -20,15 +20,15 @@
     "screenshots": "node scripts/store-screenshots.mjs"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.6.7",
+    "@biomejs/biome": "^2.6.8",
     "@crxjs/vite-plugin": "^3.0.0",
     "@preact/preset-vite": "^2.10.6",
     "@types/chrome": "^0.3.7",
-    "@vitest/coverage-v8": "^5.1.0",
+    "@vitest/coverage-v8": "^5.1.1",
     "playwright": "^1.65.0",
     "typescript": "^7.0.2",
     "vite": "^8.3.8",
-    "vitest": "^5.1.0"
+    "vitest": "^5.1.1"
   },
   "dependencies": {
     "preact": "^11.2.0"
